@@ -52,6 +52,33 @@ canvas{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);image-r
 .past li i{font-style:normal;color:#9a8a74;flex:none;width:58px}
 .past button{background:none;border:0;color:#b89a6a;cursor:pointer;font:12px Silkscreen,monospace}
 .past .none{color:#9a8a74}
+
+.relicHit{position:absolute;z-index:2;background:none;border:0;padding:0;cursor:pointer;border-radius:4px}
+.relicHit:focus-visible{outline:3px solid #ffd76e;outline-offset:2px}
+.relic{position:absolute;inset:0;z-index:6;display:flex;align-items:center;justify-content:center;padding:16px;background:radial-gradient(circle at 35% 50%,rgba(40,24,60,.55),rgba(10,6,18,.88));opacity:0;pointer-events:none;transition:opacity .35s}
+.relic.on{opacity:1;pointer-events:auto}
+.relicBox{position:relative;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:20px;align-items:center;width:min(860px,100%);max-height:calc(100dvh - 32px);overflow:auto;font:14px/1.5 Silkscreen,monospace;color:#fff3dc}
+.stage{position:relative;aspect-ratio:1/1;display:grid;place-items:center;perspective:700px}
+.rays{position:absolute;inset:6%;border-radius:50%;background:repeating-conic-gradient(from 0deg,rgba(255,214,110,.16) 0 8deg,transparent 8deg 20deg);-webkit-mask:radial-gradient(circle,#000 20%,transparent 68%);mask:radial-gradient(circle,#000 20%,transparent 68%);animation:spin 40s linear infinite}
+.halo{position:absolute;width:62%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle,rgba(255,214,110,.35),transparent 65%);animation:breathe 4s ease-in-out infinite}
+.pedestal{position:absolute;bottom:16%;width:56%;height:9%;border-radius:50%;background:radial-gradient(ellipse at center,rgba(0,0,0,.55),transparent 70%);animation:shadow 4s ease-in-out infinite}
+.turn{position:relative;width:78%;transform-style:preserve-3d;animation:turn 9s ease-in-out infinite,float 4s ease-in-out infinite}
+.turn img{display:block;width:100%;image-rendering:pixelated;image-rendering:crisp-edges}
+.turn img.layer{position:absolute;inset:0}
+.spark{position:absolute;width:4px;height:4px;background:#fff3c4;box-shadow:0 0 6px #ffd76e;animation:twinkle 2.6s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes breathe{50%{transform:scale(1.08);opacity:.8}}
+@keyframes turn{0%,100%{transform:rotateY(-28deg) rotateX(10deg)}50%{transform:rotateY(28deg) rotateX(10deg)}}
+@keyframes float{50%{translate:0 -10px}}
+@keyframes shadow{50%{transform:scale(.88);opacity:.7}}
+@keyframes twinkle{0%,100%{opacity:0;transform:scale(.4)}50%{opacity:1;transform:scale(1)}}
+.lore .kind{color:#ffd76e;font-size:12px;letter-spacing:.08em;margin:0 0 4px}
+.lore h2{font:inherit;font-size:22px;line-height:1.2;margin:0 0 12px;color:#fff3dc}
+.lore p{margin:0 0 12px;font-size:13px;color:#e8dcc4}
+.lore .found{font-size:11px;color:#9fd8cf;border-top:2px dashed rgba(255,243,220,.25);padding-top:10px}
+.relicX{position:absolute;right:0;top:0;width:40px;height:40px;background:#2a1a2e;border:3px solid #fff3dc;color:#fff3dc;font:16px Silkscreen,monospace;cursor:pointer}
+@media(max-width:640px){.relicBox{grid-template-columns:1fr;gap:6px}.stage{width:min(320px,80vw);margin:0 auto}}
+@media(prefers-reduced-motion:reduce){.rays,.halo,.turn,.pedestal,.spark{animation:none}}
 </style>
 </head>
 <body>
@@ -79,6 +106,25 @@ canvas{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);image-r
     <button type="submit" class="save">Log it</button>
     <ul class="past" id="past"></ul>
   </form>
+</div>
+<button type="button" class="relicHit" id="relicHit" aria-haspopup="dialog" aria-label="Inspect relic: Keom's seat"></button>
+<div class="relic" id="relic" aria-hidden="true">
+  <div class="relicBox" role="dialog" aria-modal="true" aria-labelledby="relicName">
+    <div class="stage" aria-hidden="true">
+      <div class="rays"></div><div class="halo"></div><div class="pedestal"></div>
+      <div class="turn" id="turn"></div>
+      <i class="spark" style="left:22%;top:30%"></i><i class="spark" style="left:74%;top:24%;animation-delay:.8s"></i><i class="spark" style="left:66%;top:70%;animation-delay:1.6s"></i><i class="spark" style="left:30%;top:66%;animation-delay:2.1s"></i>
+    </div>
+    <div class="lore">
+      <p class="kind">RELIC · ROWING</p>
+      <h2 id="relicName">Keom's Seat</h2>
+      <p>A rowing seat carved from rough wood by Keom, coach of the national team.</p>
+      <p>He made it for the hero after the original seat was swallowed by a whale, in the middle of a battle in the Arabian Gulf.</p>
+      <p>Four wheels, one gold mark. It still rolls true, and the mark still glows.</p>
+      <p class="found">Rests by the water, below the lookout.</p>
+    </div>
+    <button type="button" class="relicX" id="relicX" aria-label="Close">x</button>
+  </div>
 </div>
 <div class="veil" id="veil"></div>
 <canvas id="c" role="img" aria-label="The training world: a calm turquoise lake under big clouds, seen from a ruined lookout. The winged hero stands on a small stone platform with his back to you, holding two rowing oars; an old wooden rowing seat rests in the grass by the water like a relic, while he and his friend row a double scull slowly along the horizon."></canvas>
@@ -149,6 +195,29 @@ addEventListener('keyup', e => keys.delete(e.key.toLowerCase()));
 addEventListener('blur', () => keys.clear());
 // (no help hint: he stays on his platform)
 
+
+
+/* ---- the relic: click it in the scene to inspect it ---- */
+const relicHit = document.getElementById('relicHit'), relic = document.getElementById('relic'), turn = document.getElementById('turn');
+let seatBox = null;   /* where the seat is drawn, in canvas pixels; set by draw() */
+/* a thick, layered stack of the detailed art turns like a 3D model */
+for (let i = 7; i >= 0; i--) {
+  const im = document.createElement('img'); im.src = '../assets/relic-seat.png'; im.alt = '';
+  if (i) { im.className = 'layer'; im.style.transform = `translateZ(${-i * 2.2}px)`; im.style.filter = `brightness(${.42 + i * -0.02})`; }
+  else im.style.transform = 'translateZ(0)';
+  turn.appendChild(im);
+}
+function placeRelicHit() {
+  if (!seatBox) return;
+  const r = cv.getBoundingClientRect(), sc = r.width / W;
+  Object.assign(relicHit.style, {left: r.left + seatBox.x * sc - 6 + 'px', top: r.top + seatBox.y * sc - 6 + 'px', width: seatBox.w * sc + 12 + 'px', height: seatBox.h * sc + 12 + 'px'});
+}
+function openRelic() { relic.classList.add('on'); relic.setAttribute('aria-hidden', 'false'); sound.sparkle && sound.sparkle(); setTimeout(() => document.getElementById('relicX').focus(), 60); }
+function closeRelic() { relic.classList.remove('on'); relic.setAttribute('aria-hidden', 'true'); relicHit.focus(); }
+relicHit.addEventListener('click', openRelic);
+document.getElementById('relicX').addEventListener('click', closeRelic);
+relic.addEventListener('click', e => { if (e.target === relic) closeRelic(); });
+addEventListener('keydown', e => { if (e.key === 'Escape' && relic.classList.contains('on')) closeRelic(); });
 
 /* ---- training log: one small card, the plan fills itself in ---- */
 const KEY = 'housebiom-train-v1', PLAN_START = new Date(2026, 9, 26);
@@ -342,9 +411,14 @@ function draw(now) {
   if (seat.naturalWidth) {
     /* drawn on the background's own pixel grid (2x), so it belongs to the same picture */
     const sw = seat.naturalWidth * BGS, sh = seat.naturalHeight * BGS;
-    const sx = wx(66) - Math.round(sw / 2), sy = wy(127) - sh + 2;
+    /* by the water on the left; on narrow screens, slide it in so it stays visible */
+    const visL = -left / BGS, seatX = Math.max(66, visL + 13), front = seatX > 90;
+    const sx = wx(seatX) - Math.round(sw / 2), sy = wy(front ? 135 : 127) - sh + 2;
     g.fillStyle = 'rgba(40,24,60,.35)'; g.fillRect(sx + 4, sy + sh - 2, sw - 8, 2);
     g.drawImage(seat, sx, sy, sw, sh);
+    seatBox = {x: sx, y: sy, w: sw, h: sh}; placeRelicHit();
+    /* a small sparkle above it says "look at me" */
+    if (!still) { const sp = (t % 2.4) / 2.4; if (sp < .5) { const a = Math.sin(sp / .5 * Math.PI); g.fillStyle = `rgba(255,236,170,${a})`; const cx2 = sx + sw - 6, cy2 = sy - 5; g.fillRect(cx2, cy2 - 2, 1, 5); g.fillRect(cx2 - 2, cy2, 5, 1); } }
     /* the gold carving breathes: a slow, faint glow */
     if (runes.length) { const gl = still ? .5 : .5 + .5 * Math.sin(t * 1.1); g.fillStyle = `rgba(255,214,110,${.15 + .55 * gl})`; for (const [rx, ry] of runes) g.fillRect(sx + rx * BGS, sy + ry * BGS, BGS, BGS);
       g.fillStyle = `rgba(255,200,90,${.12 * gl})`; for (const [rx, ry] of runes) g.fillRect(sx + rx * BGS - 2, sy + ry * BGS - 2, BGS + 4, BGS + 4); }
