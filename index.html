@@ -107,8 +107,8 @@ canvas{touch-action:none;cursor:grab}
     <button class="close" id="closeBook" type="button" aria-label="Close journal">×</button>
     <form class="picker" id="pickForm" autocomplete="off"><div id="picker" hidden class="pickin">
       <h3 id="pickTitle">Log a good food</h3>
-      <input type="search" id="pickSearch" placeholder="Search foods" aria-label="Search foods">
-      <p class="pick-hint" id="pickHint" hidden>No icon with that name. Pick any icon that looks close.</p>
+      <input type="search" id="pickSearch" placeholder="Type a food, e.g. apple" aria-label="Food name">
+      <p class="pick-hint" id="pickHint" hidden>No exact picture, so I picked a stand-in. Tap any icon to change it.</p>
       <div class="pick-grid" id="pickGrid"></div>
       <label class="pick-name">Name <input type="text" id="pickName" maxlength="24" required></label>
       <div class="pick-actions"><button type="button" id="pickCancel">Cancel</button><button type="submit" id="pickAdd" disabled>Add</button></div>
@@ -243,7 +243,7 @@ const picker = document.getElementById('picker'), pickGrid = document.getElement
 let pickSide = 'good', pickIcon = null, nameEdited = false;
 pickGrid.innerHTML = ICONS.map(i => `<button type="button" class="pk" data-i="${i}" title="${human(i)}" aria-label="${human(i)}"><img src="assets/pack/${i}.png" alt="" loading="lazy"></button>`).join('');
 function openPicker(side) {
-  pickSide = side; pickIcon = null; nameEdited = false;
+  pickSide = side; pickIcon = null; nameEdited = false; iconChosen = false;
   document.getElementById('pickTitle').textContent = side === 'good' ? 'Log a good food' : 'Log a bad food';
   picker.classList.toggle('bad', side === 'bad');
   pickSearch.value = ''; pickName.value = ''; filterPicker(); updateAdd();
@@ -260,12 +260,38 @@ function filterPicker() {
   document.getElementById('pickHint').hidden = !none;
 }
 function updateAdd() { pickAdd.disabled = !(pickIcon && pickName.value.trim()); }
-pickSearch.addEventListener('input', () => { filterPicker(); if (!nameEdited && !pickIcon) pickName.value = pickSearch.value; updateAdd(); });
+function bestIcon(q) {
+  q = q.trim().toLowerCase().replace(/s\b/g, '').replace(/\s+/g, '_');
+  if (!q) return null;
+  const SYN = {salmon:'fish_fillet', tuna:'fish_fillet', cod:'fish_fillet', fish:'fish_fillet', sardine:'fish_fillet', beef:'steak_grilled', meat:'steak_grilled', lamb:'steak_grilled', turkey:'chicken_drumstick_cooked', egg:'egg_fried', bread:'bread_loaf_white', toast:'bread_loaf_white', nut:'almonds', walnut:'almonds', cashew:'almonds', berry:'blueberries', strawberrie:'strawberry', zucchini:'cucumber', courgette:'cucumber', oat:'soup_mushroom', oatmeal:'soup_mushroom', porridge:'soup_mushroom', soup:'soup_miso', quinoa:'rice_ball', lentil:'garbanzo_beans', bean:'garbanzo_beans', chickpea:'garbanzo_beans', hummus:'garbanzo_beans', date:'fig', sweet_potato:'yam', pepper:'bell_pepper_red', greens:'kale', salad:'lettuce', pasta:'macaroni', noodle:'macaroni', cheese:'cheese', butter:'butter', honey:'honey_pot', melon:'cantaloupe_slice', grape:'grapes_green', apple:'apple_red'};
+  if (SYN[q]) return SYN[q];
+  let best = null, score = 0;
+  for (const i of ICONS) {
+    const words = i.split('_');
+    let sc = i === q ? 100 : words[0] === q ? 80 : i.startsWith(q) ? 60 : words.some(w => w.startsWith(q)) ? 50 : q.split('_').some(w => w.length > 2 && words.some(x => x.startsWith(w))) ? 20 : 0;
+    if (sc > score) { score = sc; best = i; }
+  }
+  return best;
+}
+function selectIcon(i, scroll) {
+  pickGrid.querySelectorAll('.pk.sel').forEach(x => x.classList.remove('sel'));
+  const b = i && pickGrid.querySelector(`.pk[data-i="${i}"]`);
+  if (b) { b.classList.add('sel'); if (scroll) b.scrollIntoView({block: 'nearest'}); }
+  pickIcon = b ? i : null;
+}
+let iconChosen = false;
+pickSearch.addEventListener('input', () => {
+  filterPicker();
+  if (!nameEdited) pickName.value = pickSearch.value.trim().replace(/^./, c => c.toUpperCase());
+  if (!iconChosen) selectIcon(bestIcon(pickSearch.value) || (pickSearch.value.trim() ? 'canned_food_1' : null), true);
+  updateAdd();
+});
+pickSearch.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); if (!pickAdd.disabled) document.getElementById('pickForm').requestSubmit(); } });
 pickName.addEventListener('input', () => { nameEdited = true; updateAdd(); });
 pickGrid.addEventListener('click', e => {
   const b = e.target.closest('.pk'); if (!b) return;
   pickGrid.querySelectorAll('.pk.sel').forEach(x => x.classList.remove('sel'));
-  b.classList.add('sel'); pickIcon = b.dataset.i; sound.hop();
+  b.classList.add('sel'); pickIcon = b.dataset.i; iconChosen = true; sound.hop();
   if (!nameEdited) pickName.value = human(pickIcon);
   updateAdd();
 });
