@@ -101,12 +101,12 @@ let seatShade = null; const runes = [];   /* the gold carving on the relic, whic
 seat.addEventListener('load', () => {
   const c = document.createElement('canvas'); c.width = seat.naturalWidth; c.height = seat.naturalHeight;
   const x = c.getContext('2d'); x.drawImage(seat, 0, 0);
-  x.globalCompositeOperation = 'source-atop'; x.fillStyle = 'rgba(40,24,60,.12)'; x.fillRect(0, 0, c.width, c.height);
+  x.globalCompositeOperation = 'source-atop'; x.fillStyle = 'rgba(40,24,60,.06)'; x.fillRect(0, 0, c.width, c.height);
   seatShade = c;
   const d = seat.width && c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
   const t0 = document.createElement('canvas').getContext('2d'); t0.drawImage(seat, 0, 0);
   const raw = (() => { const k = document.createElement('canvas'); k.width = seat.naturalWidth; k.height = seat.naturalHeight; const x2 = k.getContext('2d'); x2.drawImage(seat, 0, 0); return x2.getImageData(0, 0, k.width, k.height).data; })();
-  for (let i = 0; i < raw.length; i += 4) { const r = raw[i], gg = raw[i + 1], b = raw[i + 2]; const px_ = (i / 4) % seat.naturalWidth, py_ = Math.floor(i / 4 / seat.naturalWidth); if (raw[i + 3] && r > 210 && gg > 150 && px_ >= 40 && px_ <= 62 && py_ >= 15 && py_ <= 25) runes.push([(i / 4) % seat.naturalWidth, Math.floor(i / 4 / seat.naturalWidth)]); }
+  for (let i = 0; i < raw.length; i += 4) { const r = raw[i], gg = raw[i + 1], b = raw[i + 2]; const px_ = (i / 4) % seat.naturalWidth, py_ = Math.floor(i / 4 / seat.naturalWidth); if (raw[i + 3] && r > 230 && gg > 180 && b < 120) runes.push([(i / 4) % seat.naturalWidth, Math.floor(i / 4 / seat.naturalWidth)]); }
 });   /* an old wooden rowing seat, left in the grass long ago */
 bg.src = '../assets/px-train.png'; hero.src = '../assets/px-hero.png'; stand.src = '../assets/px-stand.png'; scull.src = '../assets/px-double.png';
 sound.bindButton(document.getElementById('soundBtn'));
@@ -340,7 +340,7 @@ function draw(now) {
   drawBuoys(t);
 
   if (seat.naturalWidth) {
-    const sx = wx(72) - 40, sy = wy(130) - seat.naturalHeight + 4;
+    const sx = wx(72) - 9, sy = wy(126) - seat.naturalHeight + 2;
     g.fillStyle = 'rgba(30,20,30,.35)'; g.fillRect(sx + 3, sy + seat.naturalHeight - 3, seat.naturalWidth - 6, 2); g.fillRect(sx + 6, sy + seat.naturalHeight - 1, seat.naturalWidth - 12, 1);
     g.drawImage(seatShade || seat, sx, sy);
     /* the gold carving breathes: a slow, faint glow */
