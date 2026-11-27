@@ -20,6 +20,9 @@ canvas{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);image-r
 .journal button{font:inherit;color:#fff3dc;background:#2a0a12;border:3px solid #fff3dc;box-shadow:2px 2px 0 #120306;padding:5px 10px;cursor:pointer;display:flex;align-items:center;gap:8px;min-height:40px}
 .journal button b{color:#ffe17a;font-weight:normal}
 .journal button:focus-visible{outline:3px solid #8ff0c8;outline-offset:2px}
+.bookbtn{position:relative;background:none!important;border:0!important;box-shadow:none!important;padding:0!important;cursor:pointer;filter:drop-shadow(3px 3px 0 #120306);transition:transform .15s}
+.bookbtn:hover{transform:translateY(-3px) rotate(-4deg)}
+.bookbtn b{position:absolute;right:-8px;top:-6px;min-width:26px;height:26px;padding:0 5px;background:#ffd34a;color:#2a120a!important;border:3px solid #2a120a;font-size:13px;line-height:20px;text-align:center}
 .book-wrap{position:absolute;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(20,2,6,.6);opacity:0;pointer-events:none;transition:opacity .25s}
 .book-wrap.on{opacity:1;pointer-events:auto}
 .book{position:relative;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:min(860px,100%);max-height:calc(100dvh - 32px);background:#6b3a22;border:4px solid #2a120a;box-shadow:6px 6px 0 #120306,inset 0 0 0 4px #8f5230;padding:14px;perspective:1600px;font:14px/1.3 Silkscreen,monospace;color:#3a1a14}
@@ -44,9 +47,8 @@ canvas{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);image-r
 @media(prefers-reduced-motion:reduce){.leaf{transition:none}}
 .strength{position:absolute;left:50%;bottom:max(16px,env(safe-area-inset-bottom));transform:translateX(-50%);z-index:2;display:flex;align-items:center;gap:8px;font:13px Silkscreen,monospace;color:#fff3dc;text-shadow:2px 2px 0 #120306;white-space:nowrap;max-width:calc(100vw - 16px)}
 .strength b{font-weight:normal;color:#ffe17a}
-@media(max-width:480px){.strength>span:first-child{display:none}}
 .segs{display:flex;gap:2px;padding:3px;background:#2a0a12;border:3px solid #fff3dc;box-shadow:2px 2px 0 #120306}
-.segs i{width:clamp(4px,calc((100vw - 170px) / 46),10px);height:14px;background:#4a1a22;position:relative;overflow:hidden}
+.segs i{width:clamp(4px,calc((100vw - 110px) / 40),11px);height:14px;background:#4a1a22;position:relative;overflow:hidden}
 .segs i.on{background:linear-gradient(#fff3a8 0 3px,#ffd34a 3px 10px,#e0a020 10px)}
 .segs i.on::after{content:"";position:absolute;inset:0;background:rgba(255,255,255,.75);opacity:0;animation:glint 4s steps(1) infinite;animation-delay:calc(var(--i) * 70ms)}
 @keyframes glint{0%{opacity:.9}6%{opacity:0}}
@@ -57,7 +59,7 @@ canvas{touch-action:none;cursor:grab}
 </head>
 <body>
 <div class="journal">
-  <button type="button" id="journalBtn" aria-haspopup="dialog">Open journal <b id="count">0</b></button>
+  <button type="button" id="journalBtn" class="bookbtn" aria-haspopup="dialog" aria-label="Open journal"><svg viewBox="0 0 17 16" width="68" height="64" shape-rendering="crispEdges" aria-hidden="true"><rect x="1" y="0" width="15" height="15" fill="#2a120a"/><rect x="2" y="1" width="11" height="13" fill="#9a5a34"/><rect x="2" y="1" width="2" height="13" fill="#6b3a22"/><rect x="4" y="1" width="9" height="1" fill="#b87444"/><rect x="13" y="2" width="2" height="11" fill="#f3e6c8"/><rect x="13" y="4" width="2" height="1" fill="#d8c49a"/><rect x="13" y="7" width="2" height="1" fill="#d8c49a"/><rect x="13" y="10" width="2" height="1" fill="#d8c49a"/><rect x="6" y="4" width="5" height="4" fill="#2a120a"/><rect x="7" y="5" width="3" height="2" fill="#ffd34a"/><rect x="5" y="10" width="6" height="1" fill="#6b3a22"/><rect x="10" y="14" width="2" height="2" fill="#d0303a"/><rect x="10" y="15" width="1" height="1" fill="#8f1d28"/></svg><b id="count">0</b></button>
 </div>
 <div class="book-wrap" id="bookWrap" aria-hidden="true">
   <div class="book" role="dialog" aria-modal="true" aria-label="Food journal">
@@ -66,7 +68,7 @@ canvas{touch-action:none;cursor:grab}
     <button class="close" id="closeBook" type="button" aria-label="Close journal">×</button>
   </div>
 </div>
-<div class="strength" role="img" id="strength"><span>Strength</span><div class="segs" id="segs"></div><span><b id="segCount"></b></span></div>
+<div class="strength" role="img" id="strength"><div class="segs" id="segs"></div></div>
 <div class="help" id="help">Arrow keys or drag to float</div>
 <canvas id="c" role="img" aria-label="A boy with a net floats through a tunnel inside the gut while his safe foods drift by on the stream, glowing gold. Use the arrow keys or drag to float him around."></canvas>
 <script>
@@ -123,7 +125,6 @@ for (let i = 0; i < SEGMENTS; i++) {
   if (f) { el.className = 'on'; el.title = f.name; }
   segs.appendChild(el);
 }
-document.getElementById('segCount').textContent = `${Math.min(FOODS.length, SEGMENTS)} / ${SEGMENTS}`;
 document.getElementById('strength').setAttribute('aria-label', `Strength: ${Math.min(FOODS.length, SEGMENTS)} of ${SEGMENTS} foods logged successfully`);
 function fillGrid(el, items, min) {
   const n = Math.max(min, Math.ceil(items.length / 4) * 4);
