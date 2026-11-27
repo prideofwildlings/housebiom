@@ -24,12 +24,62 @@ canvas{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);image-r
 .veil.off{opacity:0}
 .veil.on{opacity:1;transition:opacity .45s ease-in}
 @media(prefers-reduced-motion:reduce){.veil{transition:none}}
+
+.logbtn{position:absolute;left:14px;top:12px;z-index:3;background:none;border:0;padding:0;cursor:pointer;filter:drop-shadow(3px 3px 0 #120a14);transition:transform .15s}
+.logbtn:hover{transform:translateY(-3px) rotate(-4deg)}
+.logbtn:focus-visible{outline:3px solid #8ff0c8;outline-offset:2px}
+.logbtn b{position:absolute;right:-8px;top:-6px;min-width:26px;height:26px;padding:0 5px;background:#8ff0c8;color:#12302e;border:3px solid #12302e;font:13px/20px Silkscreen,monospace;text-align:center}
+.wrap{position:absolute;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(6,26,28,.55);opacity:0;pointer-events:none;transition:opacity .25s}
+.wrap.on{opacity:1;pointer-events:auto}
+.card{position:relative;width:min(400px,100%);max-height:calc(100dvh - 32px);overflow:auto;background:#f3e6c8;border:4px solid #12302e;box-shadow:6px 6px 0 #0a1a1a,inset 0 0 0 3px #e0caa0;padding:18px;font:14px/1.3 Silkscreen,monospace;color:#2a2a2a;transform:translateY(12px);transition:transform .25s}
+.wrap.on .card{transform:none}
+.card h2{font:inherit;font-size:18px;color:#1f6f6a;margin:0 26px 2px 0}
+.card .plan{font-size:12px;color:#7a5a44;margin:0 0 14px}
+.card label{display:block;font-size:12px;color:#7a5a44;margin:0 0 10px}
+.card input{display:block;width:100%;margin-top:3px;font:16px Silkscreen,monospace;color:#2a2a2a;background:#fbf3df;border:3px solid #c9ad7c;padding:6px 8px;border-radius:0}
+.card input:focus{outline:none;border-color:#2bb3a8}
+.row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.split{font-size:13px;color:#1f6f6a;margin:-2px 0 10px;min-height:17px}
+.tabs{display:flex;gap:6px;margin:0 0 12px}
+.tabs button{flex:1;font:13px Silkscreen,monospace;padding:6px;background:#fbf3df;border:3px solid #c9ad7c;color:#7a5a44;cursor:pointer}
+.tabs button[aria-pressed=true]{background:#2bb3a8;border-color:#12302e;color:#fff}
+.save{width:100%;font:16px Silkscreen,monospace;padding:10px;background:#2bb3a8;color:#fff;border:3px solid #12302e;box-shadow:3px 3px 0 #12302e;cursor:pointer;margin-top:4px}
+.save:active{transform:translate(2px,2px);box-shadow:1px 1px 0 #12302e}
+.x{position:absolute;right:8px;top:8px;width:32px;height:32px;font:18px Silkscreen,monospace;background:none;border:0;cursor:pointer;color:#7a5a44}
+.past{list-style:none;padding:0;margin:16px 0 0;border-top:3px dashed #c9ad7c;padding-top:10px;font-size:12px}
+.past li{display:flex;gap:8px;align-items:baseline;padding:4px 0;color:#3a3a3a}
+.past li span{flex:1;min-width:0}
+.past li i{font-style:normal;color:#9a8a74;flex:none;width:58px}
+.past button{background:none;border:0;color:#b89a6a;cursor:pointer;font:12px Silkscreen,monospace}
+.past .none{color:#9a8a74}
 </style>
 </head>
 <body>
 <a class="back" id="back" href="../index.html" aria-label="Back to the hub"><svg viewBox="0 0 10 10" width="20" height="20" shape-rendering="crispEdges" aria-hidden="true"><rect x="1" y="4" width="8" height="2" fill="#fff3dc"/><rect x="2" y="3" width="2" height="4" fill="#fff3dc"/><rect x="3" y="2" width="1" height="6" fill="#fff3dc"/><rect x="4" y="1" width="1" height="1" fill="#fff3dc"/><rect x="4" y="8" width="1" height="1" fill="#fff3dc"/></svg>Hub</a>
 <button type="button" class="sound" id="soundBtn" aria-pressed="false" aria-label="Sound"><svg viewBox="0 0 16 16" width="32" height="32" shape-rendering="crispEdges" aria-hidden="true"><rect x="2" y="6" width="3" height="4" fill="#fff3dc"/><rect x="5" y="5" width="1" height="6" fill="#fff3dc"/><rect x="6" y="4" width="1" height="8" fill="#fff3dc"/><rect x="7" y="3" width="1" height="10" fill="#fff3dc"/><g class="w" fill="#8ff0c8"><rect x="10" y="6" width="1" height="4"/><rect x="12" y="4" width="1" height="8"/><rect x="11" y="5" width="1" height="1"/><rect x="11" y="10" width="1" height="1"/></g><g class="x" fill="#ff8a8a"><rect x="10" y="6" width="1" height="1"/><rect x="11" y="7" width="1" height="1"/><rect x="12" y="8" width="1" height="1"/><rect x="13" y="9" width="1" height="1"/><rect x="13" y="6" width="1" height="1"/><rect x="12" y="7" width="1" height="1"/><rect x="11" y="8" width="1" height="1"/><rect x="10" y="9" width="1" height="1"/></g></svg></button>
 
+<button type="button" class="logbtn" id="logBtn" aria-haspopup="dialog" aria-label="Open training log"><svg viewBox="0 0 16 16" width="64" height="64" shape-rendering="crispEdges" aria-hidden="true"><rect x="2" y="1" width="12" height="14" fill="#12302e"/><rect x="3" y="2" width="10" height="12" fill="#b9a68a"/><rect x="3" y="2" width="10" height="1" fill="#d8c8a8"/><rect x="3" y="13" width="10" height="1" fill="#8a765c"/><rect x="5" y="4" width="6" height="1" fill="#5a4a3a"/><rect x="5" y="6" width="6" height="1" fill="#5a4a3a"/><rect x="5" y="8" width="4" height="1" fill="#5a4a3a"/><rect x="4" y="10" width="1" height="3" fill="#6a4a2a"/><rect x="3" y="10" width="3" height="1" fill="#2bb3a8"/><rect x="11" y="10" width="1" height="3" fill="#6a4a2a"/><rect x="10" y="10" width="3" height="1" fill="#2bb3a8"/></svg><b id="count">0</b></button>
+<div class="wrap" id="wrap" aria-hidden="true">
+  <form class="card" id="card" role="dialog" aria-modal="true" aria-labelledby="dayTitle" autocomplete="off">
+    <button type="button" class="x" id="closeBtn" aria-label="Close">x</button>
+    <h2 id="dayTitle">Today</h2>
+    <p class="plan" id="plan"></p>
+    <label>Date<input type="date" id="date" required></label>
+    <div class="tabs" role="group" aria-label="Session type"><button type="button" data-k="erg" aria-pressed="true">Erg</button><button type="button" data-k="gym" aria-pressed="false">Gym</button></div>
+    <div id="ergF">
+      <div class="row">
+        <label>Metres<input id="m" inputmode="numeric" placeholder="12000"></label>
+        <label>Time<input id="tm" placeholder="53:20"></label>
+        <label>Rate<input id="rate" inputmode="numeric" placeholder="20"></label>
+      </div>
+      <p class="split" id="split" aria-live="polite"></p>
+    </div>
+    <div id="gymF" hidden></div>
+    <label>Note<input id="note" maxlength="80" placeholder="optional"></label>
+    <button type="submit" class="save">Log it</button>
+    <ul class="past" id="past"></ul>
+  </form>
+</div>
 <div class="veil" id="veil"></div>
 <canvas id="c" role="img" aria-label="The training world: a calm turquoise lake under big clouds, seen from a ruined lookout. The winged hero stands on a small stone platform with his back to you, holding two rowing oars, while a rower in a single scull rows slowly along the horizon."></canvas>
 <script src="../assets/sound.js"></script>
@@ -80,10 +130,108 @@ cv.addEventListener('pointerdown', e => { cv.setPointerCapture(e.pointerId); goa
 cv.addEventListener('pointermove', e => { if (goal) goal = toNative(e); });
 const endDrag = () => { goal = null; };
 cv.addEventListener('pointerup', endDrag); cv.addEventListener('pointercancel', endDrag);
-addEventListener('keydown', e => { const kk = e.key.toLowerCase(); if (['arrowup','arrowdown','arrowleft','arrowright','w','a','s','d'].includes(kk)) { keys.add(kk); e.preventDefault(); } });
+addEventListener('keydown', e => { if (e.target.closest && e.target.closest('input,textarea')) return; const kk = e.key.toLowerCase(); if (['arrowup','arrowdown','arrowleft','arrowright','w','a','s','d'].includes(kk)) { keys.add(kk); e.preventDefault(); } });
 addEventListener('keyup', e => keys.delete(e.key.toLowerCase()));
 addEventListener('blur', () => keys.clear());
 // (no help hint: he stays on his platform)
+
+
+/* ---- training log: one small card, the plan fills itself in ---- */
+const KEY = 'housebiom-train-v1', PLAN_START = new Date(2026, 9, 26);
+const TUE = [12,12,12,14,14,14,10,15,15,15,16,12], SUN = [16,16,16,18,18,18,12,18,18,18,20,12];
+const FRI = ["2×7 km UT2", "3×20' r20 @ AT/UT1", "6×500m r30–32 @ TR", "2×8 km UT2", "30' r20 benchmark", "8×500m r30–32", "5k test", "3×5 km UT2", "4×10' r23–24", "4×1000m r32", "3×2000m descending", "2k test"];
+const LIFTS = {6: ['Trap bar deadlift'], 1: ['RFE split squat'], 3: ['Bench press', 'Bench pull']};
+let log = []; try { log = JSON.parse(localStorage.getItem(KEY)) || []; } catch (e) {}
+const persist = () => { try { localStorage.setItem(KEY, JSON.stringify(log)); } catch (e) {} };
+const $ = id => document.getElementById(id);
+const pd = v => { const [y, m, d] = v.split('-').map(Number); return new Date(y, m - 1, d); };
+const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const weekOf = d => Math.floor((d - PLAN_START) / 864e5 / 7) + 1;
+const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const short = d => `${DAYS[d.getDay()]} ${d.getDate()} ${d.toLocaleString('en', {month: 'short'})}`;
+function planFor(d) {
+  const w = weekOf(d), dow = d.getDay(), inPlan = w >= 1 && w <= 12;
+  if (LIFTS[dow]) return {k: 'gym', w, text: LIFTS[dow].join(' · '), lifts: LIFTS[dow]};
+  if (inPlan && dow === 2) return {k: 'erg', w, text: TUE[w - 1] + ' km UT2', m: TUE[w - 1] * 1000};
+  if (inPlan && dow === 0) return {k: 'erg', w, text: SUN[w - 1] + ' km UT2', m: SUN[w - 1] * 1000};
+  if (inPlan && dow === 5) return {k: 'erg', w, text: FRI[w - 1]};
+  if (dow === 4) return {k: 'erg', w, text: 'Rest day (studio)'};
+  return {k: 'erg', w, text: 'Erg'};
+}
+const secs = v => { const p = String(v).trim().split(':').map(Number); if (!p.length || p.some(isNaN)) return 0; return p.reduce((a, b) => a * 60 + b, 0); };
+const fmt = s => { const m = Math.floor(s / 60), r = s - m * 60; return `${m}:${r.toFixed(1).padStart(4, '0')}`; };
+let kind = 'erg', cur = null;
+function setKind(k) {
+  kind = k;
+  document.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-pressed', b.dataset.k === k));
+  $('ergF').hidden = k !== 'erg'; $('gymF').hidden = k !== 'gym';
+}
+function fill() {
+  const d = pd($('date').value); cur = planFor(d);
+  const isToday = $('date').value === iso(new Date());
+  $('dayTitle').textContent = (isToday ? 'Today · ' : '') + short(d);
+  $('plan').textContent = (cur.w >= 1 && cur.w <= 12 ? `Week ${cur.w} · ` : '') + cur.text;
+  $('m').placeholder = cur.m || 12000;
+  const lifts = cur.lifts || ['Trap bar deadlift'];
+  $('gymF').innerHTML = `<div class="row" style="grid-template-columns:repeat(${lifts.length},minmax(0,1fr))">` + lifts.map((n, i) => `<label>${n} · top kg<input data-lift="${n}" inputmode="decimal" placeholder="kg"></label>`).join('') + '</div>';
+  setKind(cur.k); showSplit();
+}
+function showSplit() {
+  const m = +$('m').value, s = secs($('tm').value);
+  $('split').textContent = m > 0 && s > 0 ? `Split ${fmt(s / (m / 500))} /500m` : '';
+}
+function renderPast() {
+  $('count').textContent = log.length;
+  const rows = [...log].sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id).slice(0, 6);
+  $('past').innerHTML = rows.length ? rows.map(e => {
+    const what = e.k === 'erg'
+      ? `${e.m.toLocaleString('en')}m${e.s ? ' · ' + fmt(e.s / (e.m / 500)) : ''}${e.rate ? ' · r' + e.rate : ''}`
+      : Object.entries(e.lifts).map(([n, kg]) => `${n} ${kg}kg`).join(' · ');
+    return `<li><i>${short(pd(e.date)).replace(/ \w+$/, '')}</i><span>${what}${e.note ? ' — ' + e.note.replace(/</g, '&lt;') : ''}</span><button type="button" data-del="${e.id}" aria-label="Remove">x</button></li>`;
+  }).join('') : '<li class="none">Nothing logged yet.</li>';
+}
+const wrap = $('wrap');
+function openLog() { $('date').value = iso(new Date()); fill(); renderPast(); wrap.classList.add('on'); wrap.setAttribute('aria-hidden', 'false'); sound.page && sound.page(); setTimeout(() => (kind === 'erg' ? $('m') : $('gymF').querySelector('input')).focus(), 50); }
+function closeLog() { wrap.classList.remove('on'); wrap.setAttribute('aria-hidden', 'true'); $('logBtn').focus(); }
+$('logBtn').addEventListener('click', openLog);
+$('closeBtn').addEventListener('click', closeLog);
+wrap.addEventListener('click', e => { if (e.target === wrap) closeLog(); });
+addEventListener('keydown', e => { if (e.key === 'Escape' && wrap.classList.contains('on')) closeLog(); });
+$('date').addEventListener('change', fill);
+$('m').addEventListener('input', showSplit); $('tm').addEventListener('input', showSplit);
+document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => setKind(b.dataset.k)));
+$('past').addEventListener('click', e => { const id = e.target.dataset.del; if (!id) return; log = log.filter(x => String(x.id) !== id); persist(); renderPast(); });
+$('card').addEventListener('submit', e => {
+  e.preventDefault();
+  const en = {id: Date.now(), date: $('date').value, k: kind, plan: cur.text, note: $('note').value.trim()};
+  if (kind === 'erg') {
+    en.m = Math.round(+$('m').value || cur.m || 0); en.s = secs($('tm').value); en.rate = +$('rate').value || 0;
+    if (!en.m) { $('m').focus(); return; }
+  } else {
+    en.lifts = {};
+    $('gymF').querySelectorAll('input').forEach(i => { if (i.value.trim()) en.lifts[i.dataset.lift] = +i.value || i.value.trim(); });
+    if (!Object.keys(en.lifts).length) { $('gymF').querySelector('input').focus(); return; }
+  }
+  log.push(en); persist(); renderPast();
+  ['m', 'tm', 'rate', 'note'].forEach(i => $(i).value = ''); $('gymF').querySelectorAll('input').forEach(i => i.value = ''); showSplit();
+  sound.sparkle && sound.sparkle();
+  litAt = performance.now();
+});
+renderPast();
+let litAt = -1e9;
+/* one buoy per plan week; it lights once something is logged that week */
+const BUOYS = Array.from({length: 12}, (_, i) => LAKE.x0 + 14 + i * (LAKE.x1 - LAKE.x0 - 28) / 11);
+function drawBuoys(t) {
+  const weeks = new Set(log.map(e => weekOf(pd(e.date)))), nowW = weekOf(new Date()), y = wy(108), flash = (performance.now() - litAt) / 1000;
+  BUOYS.forEach((x, i) => {
+    const w = i + 1, on = weeks.has(w), bx = Math.round(wx(x)), bob = still ? 0 : Math.round(Math.sin(t * 1.4 + i) * .6);
+    if (on) { g.fillStyle = `rgba(255,190,110,${.25 + (w === nowW && flash < 1.2 ? .5 * (1 - flash / 1.2) : 0)})`; g.fillRect(bx - 3, y - 4 + bob, 7, 7); }
+    g.fillStyle = on ? '#ff9a3c' : '#4a5a64'; g.fillRect(bx - 1, y - 1 + bob, 3, 2);
+    g.fillStyle = on ? '#fff0c8' : '#6a7a84'; g.fillRect(bx, y - 3 + bob, 1, 2);
+    if (w === nowW && !on && !still && Math.floor(t * 1.5) % 2) { g.fillStyle = '#d8fff6'; g.fillRect(bx, y - 4 + bob, 1, 1); }
+    g.fillStyle = 'rgba(20,40,50,.35)'; g.fillRect(bx - 1, y + 1 + bob, 3, 1);
+  });
+}
 
 /* lake light streaks and a few birds */
 const streaks = Array.from({length: 14}, () => ({x: LAKE.x0 + Math.random() * (LAKE.x1 - LAKE.x0), y: LAKE.y0 + 1 + Math.floor(Math.random() * (LAKE.y1 - LAKE.y0 - 2)), len: 3 + Math.floor(Math.random() * 8), ph: Math.random() * 6, v: .8 + Math.random() * 1.6}));
@@ -129,6 +277,8 @@ function draw(now) {
     g.drawImage(scull, f * SCULL_W, 0, SCULL_W, SCULL_H, bx - SCULL_HX, by - SCULL_HY, SCULL_W, SCULL_H);
     g.restore();
   }
+
+  drawBuoys(t);
 
   /* hero */
   const minX = 26, maxX = W - 34, minY = top + 30, maxY = wy(118) - 30;
