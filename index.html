@@ -20,12 +20,17 @@ canvas{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);image-r
 .journal button{font:inherit;color:#fff3dc;background:#2a0a12;border:3px solid #fff3dc;box-shadow:2px 2px 0 #120306;padding:5px 10px;cursor:pointer;display:flex;align-items:center;gap:8px;min-height:40px}
 .journal button b{color:#ffe17a;font-weight:normal}
 .journal button:focus-visible{outline:3px solid #8ff0c8;outline-offset:2px}
+.sound{position:absolute;right:14px;top:12px;z-index:3;width:48px;height:48px;padding:0;background:#2a0a12;border:3px solid #fff3dc;box-shadow:2px 2px 0 #120306;cursor:pointer;display:grid;place-items:center}
+.sound:focus-visible{outline:3px solid #8ff0c8;outline-offset:2px}
+.sound .w{opacity:0}.sound[aria-pressed=true] .w{opacity:1}.sound[aria-pressed=true] .x{opacity:0}
+.tag{position:absolute;z-index:2;transform:translate(-50%,-100%);font:14px/1.2 Silkscreen,monospace;color:#2a120a;background:#fff3dc;border:3px solid #2a120a;box-shadow:3px 3px 0 #120306;padding:4px 8px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .15s}
+.tag.on{opacity:1}
 .bookbtn{position:relative;background:none!important;border:0!important;box-shadow:none!important;padding:0!important;cursor:pointer;filter:drop-shadow(3px 3px 0 #120306);transition:transform .15s}
 .bookbtn:hover{transform:translateY(-3px) rotate(-4deg)}
 .bookbtn b{position:absolute;right:-8px;top:-6px;min-width:26px;height:26px;padding:0 5px;background:#ffd34a;color:#2a120a!important;border:3px solid #2a120a;font-size:13px;line-height:20px;text-align:center}
 .book-wrap{position:absolute;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(20,2,6,.6);opacity:0;pointer-events:none;transition:opacity .25s}
 .book-wrap.on{opacity:1;pointer-events:auto}
-.book{position:relative;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:min(860px,100%);max-height:calc(100dvh - 32px);background:#6b3a22;border:4px solid #2a120a;box-shadow:6px 6px 0 #120306,inset 0 0 0 4px #8f5230;padding:14px;perspective:1600px;font:14px/1.3 Silkscreen,monospace;color:#3a1a14}
+.book{position:relative;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:minmax(0,1fr);width:min(860px,100%);height:min(620px,calc(100dvh - 32px));background:#6b3a22;border:4px solid #2a120a;box-shadow:6px 6px 0 #120306,inset 0 0 0 4px #8f5230;padding:14px;perspective:1600px;font:14px/1.3 Silkscreen,monospace;color:#3a1a14}
 .leaf{background:#f3e6c8;background-image:repeating-linear-gradient(#f3e6c8 0 23px,#e6d4ae 23px 24px);padding:18px 18px 22px;overflow:auto;min-height:0;box-shadow:inset 0 0 0 3px #e0caa0;transform-style:preserve-3d;transition:transform .55s cubic-bezier(.2,.7,.2,1),opacity .55s}
 .leaf.l{transform-origin:right center;box-shadow:inset -18px 0 22px -14px rgba(60,20,10,.45),inset 0 0 0 3px #e0caa0}
 .leaf.r{transform-origin:left center;box-shadow:inset 18px 0 22px -14px rgba(60,20,10,.45),inset 0 0 0 3px #e0caa0}
@@ -34,16 +39,20 @@ canvas{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);image-r
 .leaf h2{font:inherit;font-size:18px;margin:0 0 12px;display:flex;align-items:center;gap:8px}
 .leaf.l h2{color:#2f7a48}.leaf.r h2{color:#a4263a}
 .leaf p{margin:0 0 12px;font-size:13px;color:#7a5a44}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:8px}
-.cell{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border:3px solid #c9ad7c;background:#fbf3df;text-align:center;font-size:12px;line-height:1.1;padding:4px;color:#3a1a14}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(98px,1fr));gap:8px}
+.cell{min-height:86px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border:3px solid #c9ad7c;background:#fbf3df;text-align:center;font-size:11px;line-height:1.15;padding:6px 4px;color:#3a1a14;min-width:0;overflow-wrap:anywhere}
 .cell img{width:32px;height:32px;image-rendering:pixelated}
+.cell.on{cursor:pointer;transition:transform .12s}
+.cell.on:hover,.cell.on:focus-visible{transform:translateY(-3px);outline:none;box-shadow:3px 3px 0 rgba(58,26,20,.25)}
+.cell.on:hover img,.cell.on:focus-visible img{animation:hop .45s steps(4)}
+@keyframes hop{30%{transform:translateY(-6px) rotate(-8deg)}60%{transform:translateY(0) rotate(6deg)}}
 .leaf.l .cell.on{border-color:#5cae74;background:#eef8e6}
 .leaf.r .cell.on{border-color:#d0606e;background:#fbe8e6}
 .leaf.r .cell.on img{filter:saturate(.55) brightness(.85)}
 .cell.empty{border-style:dashed;background:transparent;opacity:.55}
 .close{position:absolute;right:-14px;top:-14px;width:44px;height:44px;border:3px solid #fff3dc;background:#2a0a12;color:#fff3dc;font:20px Silkscreen,monospace;cursor:pointer;box-shadow:2px 2px 0 #120306}
 .close:focus-visible{outline:3px solid #8ff0c8;outline-offset:2px}
-@media(max-width:620px){.book{grid-template-columns:minmax(0,1fr);overflow:auto}.leaf.l{transform-origin:center bottom}.leaf.r{transform-origin:center top}.book-wrap:not(.on) .leaf.l{transform:rotateX(-80deg)}.book-wrap:not(.on) .leaf.r{transform:rotateX(80deg)}.close{right:-6px;top:-6px}}
+@media(max-width:620px){.book{grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto;height:auto;max-height:calc(100dvh - 32px);overflow:auto}.leaf{overflow:visible}.leaf.l{transform-origin:center bottom}.leaf.r{transform-origin:center top}.book-wrap:not(.on) .leaf.l{transform:rotateX(-80deg)}.book-wrap:not(.on) .leaf.r{transform:rotateX(80deg)}.close{right:-6px;top:-6px}}
 @media(prefers-reduced-motion:reduce){.leaf{transition:none}}
 .strength{position:absolute;left:50%;bottom:max(16px,env(safe-area-inset-bottom));transform:translateX(-50%);z-index:2;display:flex;align-items:center;gap:8px;font:13px Silkscreen,monospace;color:#fff3dc;text-shadow:2px 2px 0 #120306;white-space:nowrap;max-width:calc(100vw - 16px)}
 .strength b{font-weight:normal;color:#ffe17a}
@@ -70,6 +79,8 @@ canvas{touch-action:none;cursor:grab}
 </div>
 <div class="strength" role="img" id="strength"><div class="segs" id="segs"></div></div>
 <div class="help" id="help">Arrow keys or drag to float</div>
+<button type="button" class="sound" id="soundBtn" aria-pressed="false" aria-label="Sound"><svg viewBox="0 0 16 16" width="32" height="32" shape-rendering="crispEdges" aria-hidden="true"><rect x="2" y="6" width="3" height="4" fill="#fff3dc"/><rect x="5" y="5" width="1" height="6" fill="#fff3dc"/><rect x="6" y="4" width="1" height="8" fill="#fff3dc"/><rect x="7" y="3" width="1" height="10" fill="#fff3dc"/><g class="w" fill="#8ff0c8"><rect x="10" y="6" width="1" height="4"/><rect x="12" y="4" width="1" height="8"/><rect x="11" y="5" width="1" height="1"/><rect x="11" y="10" width="1" height="1"/></g><g class="x" fill="#ff8a8a"><rect x="10" y="6" width="1" height="1"/><rect x="11" y="7" width="1" height="1"/><rect x="12" y="8" width="1" height="1"/><rect x="13" y="9" width="1" height="1"/><rect x="13" y="6" width="1" height="1"/><rect x="12" y="7" width="1" height="1"/><rect x="11" y="8" width="1" height="1"/><rect x="10" y="9" width="1" height="1"/></g></svg></button>
+<div class="tag" id="tag"></div>
 <canvas id="c" role="img" aria-label="A boy with a net floats through a tunnel inside the gut while his safe foods drift by on the stream, glowing gold. Use the arrow keys or drag to float him around."></canvas>
 <script>
 {
@@ -142,6 +153,7 @@ function toggle(open) {
   const was = wrap.classList.contains('on'), on = open ?? !was;
   if (on === was) return;
   wrap.classList.toggle('on', on); wrap.setAttribute('aria-hidden', String(!on));
+  if (typeof sound !== 'undefined') sound.page();
   if (on) { lastFocus = document.activeElement; document.getElementById('closeBook').focus(); }
   else if (lastFocus) lastFocus.focus();
 }
@@ -161,6 +173,100 @@ addEventListener('keydown', e => { const kk = e.key.toLowerCase(); if (['arrowup
 addEventListener('keyup', e => keys.delete(e.key.toLowerCase()));
 addEventListener('blur', () => keys.clear());
 setTimeout(() => document.getElementById('help').style.opacity = 0, 6000);
+
+/* hovering or tapping a floating food */
+const tag = document.getElementById('tag');
+let hovered = null, tagHideT = 0;
+function foodAt(n) { for (const o of floats) if (n.x > o.x - 3 && n.x < o.x + 19 && n.y > top + 82 && n.y < top + 104) return o; return null; }
+function showTag(o) {
+  const r = cv.getBoundingClientRect();
+  tag.textContent = o.f.name;
+  const x = r.left + (o.x + 8) * k, hw = tag.offsetWidth / 2 + 8;
+  tag.style.left = Math.max(hw, Math.min(innerWidth - hw, x)) + 'px';
+  tag.style.top = (r.top + (top + 80) * k) + 'px';
+  tag.classList.add('on');
+}
+cv.addEventListener('pointermove', e => {
+  if (goal || e.pointerType !== 'mouse') return;
+  const o = foodAt(toNative(e));
+  if (o !== hovered) { hovered = o; if (o) { sound.blip(); showTag(o); } else tag.classList.remove('on'); }
+  cv.style.cursor = o ? 'pointer' : 'grab';
+});
+cv.addEventListener('pointerleave', () => { hovered = null; tag.classList.remove('on'); });
+cv.addEventListener('pointerdown', e => {
+  const o = foodAt(toNative(e));
+  if (o) { goal = null; hovered = o; o.boost = performance.now(); sound.blip(); showTag(o); clearTimeout(tagHideT); if (e.pointerType !== 'mouse') tagHideT = setTimeout(() => { hovered = null; tag.classList.remove('on'); }, 1800); }
+});
+
+
+
+/* ---------- sound: synthesized chiptune ambience and effects ---------- */
+const sound = (() => {
+  let ac = null, master = null, on = false, timer = 0, step = 0;
+  const NOTES = [523.25, 587.33, 659.25, 783.99, 880, 1046.5];
+  const TUNE = [0, 2, 4, 2, 3, 1, 2, -1, 0, 4, 5, 4, 3, 2, 1, -1];
+  function tone(freq, dur, type = 'triangle', vol = .05, when = 0, slide = 0) {
+    if (!ac || !on) return;
+    const t0 = ac.currentTime + when, o = ac.createOscillator(), g = ac.createGain();
+    o.type = type; o.frequency.setValueAtTime(freq, t0);
+    if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(40, freq * slide), t0 + dur);
+    g.gain.setValueAtTime(0, t0); g.gain.linearRampToValueAtTime(vol, t0 + .01); g.gain.exponentialRampToValueAtTime(.0001, t0 + dur);
+    o.connect(g).connect(master); o.start(t0); o.stop(t0 + dur + .05);
+  }
+  function noise(dur, vol, f0, f1) {
+    if (!ac || !on) return;
+    const n = ac.createBufferSource(), b = ac.createBuffer(1, ac.sampleRate * dur, ac.sampleRate), d = b.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    n.buffer = b;
+    const f = ac.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 1.2;
+    const t0 = ac.currentTime; f.frequency.setValueAtTime(f0, t0); f.frequency.exponentialRampToValueAtTime(f1, t0 + dur);
+    const g = ac.createGain(); g.gain.setValueAtTime(vol, t0); g.gain.exponentialRampToValueAtTime(.0001, t0 + dur);
+    n.connect(f).connect(g).connect(master); n.start(); n.stop(t0 + dur);
+  }
+  let hum = null;
+  function startHum() {
+    const g = ac.createGain(); g.gain.value = .0;
+    const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 260;
+    const o1 = ac.createOscillator(), o2 = ac.createOscillator(); o1.type = o2.type = 'triangle';
+    o1.frequency.value = 55; o2.frequency.value = 82.6;
+    const lfo = ac.createOscillator(), lg = ac.createGain(); lfo.frequency.value = .18; lg.gain.value = .018;
+    lfo.connect(lg).connect(g.gain);
+    o1.connect(lp); o2.connect(lp); lp.connect(g).connect(master);
+    g.gain.setValueAtTime(.035, ac.currentTime);
+    [o1, o2, lfo].forEach(o => o.start());
+    hum = {stop: () => [o1, o2, lfo].forEach(o => o.stop())};
+  }
+  function tick() {
+    const n = TUNE[step % TUNE.length];
+    if (n >= 0) tone(NOTES[n] / 2, .6, 'triangle', .025);
+    if (step % 4 === 0) tone(NOTES[[0, 3, 1, 2][(step / 4) % 4 | 0]] / 4, 1.4, 'sine', .02);
+    if (Math.random() < .35) tone(300 + Math.random() * 500, .12, 'sine', .03, Math.random() * .3, .45);
+    step++;
+  }
+  return {
+    get on() { return on; },
+    toggle() {
+      if (!ac) { const A = window.AudioContext || window.webkitAudioContext; if (!A) return false; ac = new A(); master = ac.createGain(); master.gain.value = .8; master.connect(ac.destination); }
+      on = !on;
+      if (on) { ac.resume(); startHum(); timer = setInterval(tick, 430); }
+      else { clearInterval(timer); if (hum) hum.stop(); hum = null; }
+      return on;
+    },
+    blip() { tone(988, .07, 'square', .025); tone(1319, .09, 'square', .02, .05); },
+    hop() { tone(660, .1, 'square', .02, 0, 1.6); },
+    sparkle() { [0, 2, 4, 5].forEach((n, i) => tone(NOTES[n] * 2, .18, 'triangle', .03, i * .07)); },
+    page() { noise(.28, .12, 2400, 600); }
+  };
+})();
+const soundBtn = document.getElementById('soundBtn');
+soundBtn.addEventListener('click', () => { const on = sound.toggle(); soundBtn.setAttribute('aria-pressed', String(on)); soundBtn.setAttribute('aria-label', on ? 'Sound on' : 'Sound off'); if (on) sound.blip(); });
+
+/* journal cells react */
+document.querySelectorAll('.cell.on').forEach(c => {
+  c.tabIndex = 0;
+  c.addEventListener('mouseenter', () => sound.hop());
+  c.addEventListener('focus', () => sound.hop());
+});
 
 /* canvas sizing at an integer pixel scale */
 let W = 0, H = 0, k = 1, top = 0, topCol = '#4a0f1a', botCol = '#4a0f1a';
@@ -213,15 +319,18 @@ function draw(now) {
   for (let i = floats.length - 1; i >= 0; i--) {
     const o = floats[i];
     if (!still) o.x -= dt * 18;
-    if (o.x < -24) { floats.splice(i, 1); continue; }
-    const fx = Math.round(o.x), wl = top + 101 + (still ? 0 : Math.round(Math.sin(t * 2 + o.ph)));
+    if (o.x < -24) { if (o === hovered) { hovered = null; tag.classList.remove('on'); } floats.splice(i, 1); continue; }
+    const hot = o === hovered;
+    const fx = Math.round(o.x), wl = top + 101 + (still ? 0 : Math.round(Math.sin(t * 2 + o.ph))) - (hot ? 3 : 0);
+    if (hot) showTag(o);
     if (o.f.aura) {
-      g.globalAlpha = still ? .8 : Math.max(.15, .55 + .45 * Math.sin(t * 3 + o.ph));
+      g.globalAlpha = hot ? 1 : still ? .8 : Math.max(.15, .55 + .45 * Math.sin(t * 3 + o.ph));
       g.drawImage(o.f.aura[still ? 0 : Math.floor(t * 3) % 2], 0, 0, 22, 16, fx - 3, wl - 16, 22, 16);
       g.globalAlpha = 1;
     }
     if (o.f.img.naturalWidth) g.drawImage(o.f.img, 0, 0, 16, 13, fx, wl - 13, 16, 13);
     g.fillStyle = 'rgba(190,255,230,.75)'; g.fillRect(fx + 1, wl, 4, 1); g.fillRect(fx + 9, wl, 5, 1);
+    if (hot && !still) { g.fillStyle = '#fffbe0'; for (let j = 0; j < 6; j++) { const a = j / 6 * Math.PI * 2 + t * 4; g.fillRect(fx + 8 + Math.round(Math.cos(a) * 12), wl - 7 + Math.round(Math.sin(a) * 9), 1, 1); } }
     if (!still) {
       const n = Math.floor(t * 1.6 + o.ph), tw = (t * 1.6 + o.ph) % 1, sx = fx + (n * 7) % 18 - 1, sy = wl - 15 + (n * 5) % 7;
       if (tw < .5) { g.fillStyle = '#fffbe0'; g.fillRect(sx, sy, 1, 1); if (tw > .15 && tw < .35) { g.fillRect(sx - 1, sy, 3, 1); g.fillRect(sx, sy - 1, 1, 3); } }
@@ -249,7 +358,7 @@ function draw(now) {
       if (l.len) g.fillRect(kx - 22 - Math.floor(l.t * 30), l.y, l.len, 1);
     }
   }
-  if (!still && t > cheerAt) { cheerUntil = t + 1.1; cheerAt = t + 14 + Math.random() * 8; }
+  if (!still && t > cheerAt) { cheerUntil = t + 1.1; cheerAt = t + 14 + Math.random() * 8; sound.sparkle(); }
   const frame = still ? 0 : t < cheerUntil ? 3 : Math.floor(t * 4.5) % 2;
   if (kid.naturalWidth) g.drawImage(kid, frame * FRAME_W, 0, FRAME_W, FRAME_H, kx - ANCHOR_X, ky - ANCHOR_Y, FRAME_W, FRAME_H);
   if (frame === 3) {
