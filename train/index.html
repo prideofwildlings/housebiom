@@ -31,7 +31,7 @@ canvas{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);image-r
 <button type="button" class="sound" id="soundBtn" aria-pressed="false" aria-label="Sound"><svg viewBox="0 0 16 16" width="32" height="32" shape-rendering="crispEdges" aria-hidden="true"><rect x="2" y="6" width="3" height="4" fill="#fff3dc"/><rect x="5" y="5" width="1" height="6" fill="#fff3dc"/><rect x="6" y="4" width="1" height="8" fill="#fff3dc"/><rect x="7" y="3" width="1" height="10" fill="#fff3dc"/><g class="w" fill="#8ff0c8"><rect x="10" y="6" width="1" height="4"/><rect x="12" y="4" width="1" height="8"/><rect x="11" y="5" width="1" height="1"/><rect x="11" y="10" width="1" height="1"/></g><g class="x" fill="#ff8a8a"><rect x="10" y="6" width="1" height="1"/><rect x="11" y="7" width="1" height="1"/><rect x="12" y="8" width="1" height="1"/><rect x="13" y="9" width="1" height="1"/><rect x="13" y="6" width="1" height="1"/><rect x="12" y="7" width="1" height="1"/><rect x="11" y="8" width="1" height="1"/><rect x="10" y="9" width="1" height="1"/></g></svg></button>
 <div class="help" id="help">Arrow keys or drag to fly</div>
 <div class="veil" id="veil"></div>
-<canvas id="c" role="img" aria-label="The training world: a calm turquoise lake under big clouds, seen from a ruined lookout. The winged hero stands on a small stone platform with his back to you, holding two rowing oars, while a rower in a single scull rows slowly across the lake. Use the arrow keys or drag to fly; leave him and he lands back on the platform."></canvas>
+<canvas id="c" role="img" aria-label="The training world: a calm turquoise lake under big clouds, seen from a ruined lookout. The winged hero stands on a small stone platform with his back to you, holding two rowing oars, while a rower in a single scull rows slowly along the horizon. Use the arrow keys or drag to fly; leave him and he lands back on the platform."></canvas>
 <script src="../assets/sound.js"></script>
 <script>
 {
@@ -42,7 +42,7 @@ const BGS = 2, BG_W = 250, BG_H = 140, FRAME_W = 51, FRAME_H = 55, ANCHOR_X = 25
 const LAKE = {x0: 28, x1: 208, y0: 101, y1: 120};
 const STAND_W = 41, STAND_H = 65, STAND_AX = 18, STAND_FEET = 64;
 const LAND = {x: 125, y: 115};
-const SCULL_W = 44, SCULL_H = 28, SCULL_HX = 3, SCULL_HY = 19;
+const SCULL_W = 26, SCULL_H = 17, SCULL_HX = 2, SCULL_HY = 11;
 const bg = new Image(), hero = new Image(), stand = new Image(), scull = new Image();
 bg.src = '../assets/px-train.png'; hero.src = '../assets/px-hero.png'; stand.src = '../assets/px-stand.png'; scull.src = '../assets/px-scull.png';
 sound.bindButton(document.getElementById('soundBtn'));
@@ -113,18 +113,19 @@ function draw(now) {
   }
 
   /* a single scull rowing across the lake at UT2 pace (20 strokes a minute).
-     The rower faces right, so the boat travels left. Frames: catch, drive, drive, finish, recovery, recovery. */
+     The rower faces right, so the boat travels left, far out near the horizon.
+     Frames: finish, extraction, recovery, recovery; the jump back to the finish is the quick drive. */
   if (scull.naturalWidth) {
-    const RATE = 20, T = 60 / RATE, DUR = [.3, .35, .35, .3, .85, .85].map(d => d * T / 3);
+    const RATE = 20, T = 60 / RATE, DUR = [.55, .45, 1, 1].map(d => d * T / 3);
     const cyc = 150, ph = still ? .4 : (t % cyc) / cyc;
     let st = still ? 0 : t % T, f = 0;
-    while (f < 5 && st > DUR[f]) { st -= DUR[f]; f++; }
-    const glide = still ? 0 : Math.sin((t % T) / T * Math.PI * 2) * 1.2;
-    const xr = wx(LAKE.x1) - 30, xl = wx(LAKE.x0) - 10;
-    const bx = Math.round(xr + (xl - xr) * ph - glide), by = wy(LAKE.y0 + 5);
+    while (f < 3 && st > DUR[f]) { st -= DUR[f]; f++; }
+    const glide = still ? 0 : Math.sin((t % T) / T * Math.PI * 2) * .6;
+    const xr = wx(LAKE.x1) - 20, xl = wx(LAKE.x0) + 4;
+    const bx = Math.round(xr + (xl - xr) * ph - glide), by = wy(LAKE.y0) + 3;
     const fade = Math.min(1, ph / .05, (1 - ph) / .05);
     g.save(); g.globalAlpha = Math.max(0, fade);
-    if (!still) { g.fillStyle = 'rgba(240,255,252,.45)'; for (let i = 0; i < 4; i++) g.fillRect(bx + SCULL_W - 2 + i * 6, by + 1 + (i % 2), 4, 1); }
+    if (!still) { g.fillStyle = 'rgba(240,255,252,.45)'; for (let i = 0; i < 3; i++) g.fillRect(bx + SCULL_W - 4 + i * 5, by + 1, 3, 1); }
     g.drawImage(scull, f * SCULL_W, 0, SCULL_W, SCULL_H, bx - SCULL_HX, by - SCULL_HY, SCULL_W, SCULL_H);
     g.restore();
   }
