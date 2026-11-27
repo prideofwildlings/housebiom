@@ -20,6 +20,13 @@ canvas{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);image-r
 .journal button{font:inherit;color:#fff3dc;background:#2a0a12;border:3px solid #fff3dc;box-shadow:2px 2px 0 #120306;padding:5px 10px;cursor:pointer;display:flex;align-items:center;gap:8px;min-height:40px}
 .journal button b{color:#ffe17a;font-weight:normal}
 .journal button:focus-visible{outline:3px solid #8ff0c8;outline-offset:2px}
+.strength{display:flex;align-items:center;gap:8px;text-shadow:2px 2px 0 #120306;font-size:13px}
+.segs{display:flex;gap:2px;padding:3px;background:#2a0a12;border:3px solid #fff3dc;box-shadow:2px 2px 0 #120306}
+.segs i{width:10px;height:14px;background:#4a1a22;position:relative;overflow:hidden}
+.segs i.on{background:linear-gradient(#fff3a8 0 3px,#ffd34a 3px 10px,#e0a020 10px)}
+.segs i.on::after{content:"";position:absolute;inset:0;background:rgba(255,255,255,.75);opacity:0;animation:glint 4s steps(1) infinite;animation-delay:calc(var(--i) * 70ms)}
+@keyframes glint{0%{opacity:.9}6%{opacity:0}}
+@media(prefers-reduced-motion:reduce){.segs i.on::after{animation:none}}
 .page{background:#f3e6c8;color:#3a1a14;border:3px solid #fff3dc;box-shadow:3px 3px 0 #120306;padding:10px 12px;max-height:min(420px,70vh);overflow:auto;min-width:230px}
 .page[hidden]{display:none}
 .page h2{font:inherit;font-size:15px;color:#7a2030;margin-bottom:6px}
@@ -36,6 +43,7 @@ canvas{touch-action:none;cursor:grab}
 <body>
 <div class="journal">
   <button type="button" id="journalBtn" aria-expanded="false" aria-controls="page">Journal <b id="count">0</b> foods ▾</button>
+  <div class="strength" role="img" id="strength"><span>Strength</span><div class="segs" id="segs"></div></div>
   <div class="page" id="page" hidden><h2>Logged in successfully</h2><ul id="list"></ul></div>
 </div>
 <div class="help" id="help">Arrow keys or drag to float</div>
@@ -86,6 +94,14 @@ FOODS.forEach(f => { f.img.onload = () => makeAura(f); });
 /* journal */
 const btn = document.getElementById('journalBtn'), page = document.getElementById('page'), list = document.getElementById('list');
 document.getElementById('count').textContent = FOODS.length;
+const SEGMENTS = 14, segs = document.getElementById('segs');
+for (let i = 0; i < SEGMENTS; i++) {
+  const el = document.createElement('i'), f = FOODS[i];
+  el.style.setProperty('--i', i);
+  if (f) { el.className = 'on'; el.title = f.name; }
+  segs.appendChild(el);
+}
+document.getElementById('strength').setAttribute('aria-label', `Strength: ${Math.min(FOODS.length, SEGMENTS)} of ${SEGMENTS} foods logged successfully`);
 for (const f of FOODS) {
   const li = document.createElement('li');
   li.innerHTML = '<img alt=""><span></span><i>✓</i>';
