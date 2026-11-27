@@ -50,6 +50,36 @@ canvas{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);image-r
 .leaf.r .cell.on{border-color:#d0606e;background:#fbe8e6}
 .leaf.r .cell.on img{filter:saturate(.55) brightness(.85)}
 .cell.empty{border-style:dashed;background:transparent;opacity:.55}
+.cell.empty{cursor:pointer;font:inherit;color:#b89a6a}
+.cell.empty .plus{font-size:22px;opacity:0;transition:opacity .15s}
+.cell.empty:hover,.cell.empty:focus-visible{opacity:1;border-color:#a8875a;outline:none}
+.cell.empty:hover .plus,.cell.empty:focus-visible .plus{opacity:1}
+.cell{position:relative}
+.cell .rm{position:absolute;right:2px;top:2px;width:22px;height:22px;padding:0;border:0;background:none;color:#9a6a60;font:16px Silkscreen,monospace;cursor:pointer;opacity:0}
+.cell:hover .rm,.cell:focus-within .rm{opacity:1}
+.cell.fresh{animation:fresh 1.2s ease-out}
+@keyframes fresh{0%{transform:scale(.6);background:#fff7b0}50%{transform:scale(1.08)}100%{transform:none}}
+.picker{display:contents}
+.pickin{position:absolute;inset:14px;z-index:3;background:#f3e6c8;border:3px solid #2a120a;box-shadow:4px 4px 0 rgba(18,3,6,.5);padding:14px;display:flex;flex-direction:column;gap:10px;min-height:0}
+.pickin[hidden]{display:none}
+.pickin h3{font:inherit;font-size:17px;margin:0;color:#2f7a48}
+.picker.bad .pickin h3,.pickin.bad h3{color:#a4263a}
+.pickin input{font:15px Silkscreen,monospace;color:#3a1a14;background:#fbf3df;border:3px solid #c9ad7c;padding:8px 10px;min-height:44px;width:100%}
+.pickin input:focus{outline:3px solid #8ff0c8;outline-offset:1px}
+.pick-grid{flex:1;min-height:0;overflow:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(44px,1fr));gap:4px;align-content:start;padding:2px}
+.pk{aspect-ratio:1;border:2px solid transparent;background:#fbf3df;cursor:pointer;padding:4px;display:grid;place-items:center}
+.pk[hidden]{display:none}
+.pk img{width:32px;height:32px;image-rendering:pixelated}
+.pk:hover,.pk:focus-visible{border-color:#c9ad7c;outline:none}
+.pk.sel{border-color:#2f7a48;background:#eef8e6}
+.pick-hint{margin:0;font-size:13px;color:#7a5a44}
+.pick-hint[hidden]{display:none}
+.pick-name{display:flex;align-items:center;gap:10px;font-size:14px}
+.pick-actions{display:flex;gap:10px;justify-content:flex-end}
+.pick-actions button{font:15px Silkscreen,monospace;min-height:44px;padding:0 16px;border:3px solid #2a120a;cursor:pointer;background:#fbf3df;color:#3a1a14}
+.pick-actions button[type=submit]{background:#2f7a48;color:#fff3dc}
+.pick-actions button:disabled{opacity:.45;cursor:default}
+.pick-actions button:focus-visible{outline:3px solid #8ff0c8;outline-offset:2px}
 .close{position:absolute;right:-14px;top:-14px;width:44px;height:44px;border:3px solid #fff3dc;background:#2a0a12;color:#fff3dc;font:20px Silkscreen,monospace;cursor:pointer;box-shadow:2px 2px 0 #120306}
 .close:focus-visible{outline:3px solid #8ff0c8;outline-offset:2px}
 @media(max-width:620px){.book{grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto;height:auto;max-height:calc(100dvh - 32px);overflow:auto}.leaf{overflow:visible}.leaf.l{transform-origin:center bottom}.leaf.r{transform-origin:center top}.book-wrap:not(.on) .leaf.l{transform:rotateX(-80deg)}.book-wrap:not(.on) .leaf.r{transform:rotateX(80deg)}.close{right:-6px;top:-6px}}
@@ -75,6 +105,14 @@ canvas{touch-action:none;cursor:grab}
     <section class="leaf l"><h2>Good</h2><div class="grid" id="goodGrid"></div></section>
     <section class="leaf r"><h2>Bad</h2><div class="grid" id="badGrid"></div></section>
     <button class="close" id="closeBook" type="button" aria-label="Close journal">×</button>
+    <form class="picker" id="pickForm" autocomplete="off"><div id="picker" hidden class="pickin">
+      <h3 id="pickTitle">Log a good food</h3>
+      <input type="search" id="pickSearch" placeholder="Search foods" aria-label="Search foods">
+      <p class="pick-hint" id="pickHint" hidden>No icon with that name. Pick any icon that looks close.</p>
+      <div class="pick-grid" id="pickGrid"></div>
+      <label class="pick-name">Name <input type="text" id="pickName" maxlength="24" required></label>
+      <div class="pick-actions"><button type="button" id="pickCancel">Cancel</button><button type="submit" id="pickAdd" disabled>Add</button></div>
+    </div></form>
   </div>
 </div>
 <div class="strength" role="img" id="strength"><div class="segs" id="segs"></div></div>
@@ -86,7 +124,7 @@ canvas{touch-action:none;cursor:grab}
 {
 const cv = document.getElementById('c'), g = cv.getContext('2d');
 const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const BG_H = 145, TILE_W = 514, FRAME_W = 65, FRAME_H = 70, ANCHOR_X = 32, ANCHOR_Y = 27;
+const BG_H = 145, TILE_W = 514, FRAME_W = 51, FRAME_H = 55, ANCHOR_X = 25, ANCHOR_Y = 22;
 const bg = new Image(), kid = new Image();
 bg.src = 'assets/px-bg.png'; kid.src = 'assets/px-hero.png';
 
@@ -126,32 +164,129 @@ function makeAura(f) {
 FOODS.forEach(f => { f.img.onload = () => makeAura(f); });
 
 /* journal book */
+const ICONS = ["almonds", "apple_green", "apple_red", "apple_yellow", "asparagus", "avocado_half", "avocado_whole", "bacon", "bagel", "baguette", "banana", "beet", "bell_pepper_green", "bell_pepper_red", "bell_pepper_yellow", "blueberries", "bread_loaf_brown", "bread_loaf_white", "breadroll", "breadstick", "broccoli", "burger", "burrito", "butter", "cabbage", "cake_slice_chocolate", "cake_slice_plain", "cake_whole_chocolate", "cake_whole_plain", "candy_cane", "candy_corn", "canned_food_1", "canned_food_2", "canned_food_3", "canned_food_4", "cantaloupe_slice", "cantaloupe_whole", "carrot", "cauliflower", "celery", "cheese", "cheese_puffs", "cherries", "chestnut", "chicken_drumstick_cooked", "chicken_drumstick_raw", "chicken_nuggets", "chili_pepper_green", "chili_pepper_red", "chocolate", "churro", "cinnamon", "coconut_half", "coconut_whole", "cookie", "corn", "corn_maize_blue", "corn_maize_red", "crab_legs", "cranberries", "croissant", "cucumber", "cupcake_chocolate", "cupcake_vanilla", "dango", "doughnut_chocolate", "doughnut_pink", "doughnut_pink_sprinkles", "dumpling", "durian", "egg_fried", "egg_whole_blue", "egg_whole_brown", "egg_whole_white", "eggplant", "falafel", "fig", "fish_fillet", "fish_sticks", "flan", "flatbread", "fortune_cookie", "french_fries", "fruitcake", "garbanzo_beans", "garlic", "ginger", "gingerbread_man", "grapes_green", "grapes_purple", "gulab_jamun", "ham", "honey_pot", "hotdog", "icecream_chocolate", "icecream_mint", "icecream_vanilla", "jalebi", "jello", "kale", "kiwi", "lemon", "lemon_lime", "lettuce", "lollipop", "lychee", "macaroni", "mango", "mochi", "moon_cake", "muffin_blueberry", "muffin_plain", "mushroom", "narutomaki", "octopus", "olives_black", "olives_green", "onion_brown", "onion_purple", "onionrings", "orange", "oyster", "pancakes", "pea_pod", "peach", "peanut", "pear", "peppermint", "persimmon", "pie_cherry_slice", "pie_cherry_whole", "pie_pumpkin_slice", "pie_pumpkin_whole", "pineapple", "pistachios", "pizza_cheese_slice", "pizza_cheese_whole", "pizza_pepperoni_slice", "pizza_pepperoni_whole", "pizza_vegetable_slice", "pizza_vegetable_whole", "plum", "pomegranate", "popcorn", "popsicle", "potato", "pretzel", "pumpkin", "quiche", "radish", "raisins", "rice_ball", "rice_cracker", "rubus_blackberry", "rubus_raspberry", "samosa", "sandwich", "sausage", "scallions", "shrimp", "shrimp_fried", "soup_beet", "soup_miso", "soup_mushroom", "soup_pea", "spinach", "squash", "steak_grilled", "steak_raw", "strawberry", "stuffed_pita", "sushi_inari", "sushi_nigiri", "sushi_roll", "taco", "tamale", "taro", "tofu", "tomato", "turnip", "ube", "umbrella_fruit", "unagi", "vanilla", "waffle", "watermelon_slice", "watermelon_whole", "yam"];
+const human = k => k.replace(/_/g, ' ').replace(/^./, c => c.toUpperCase());
 const BAD = [['oat','Oat'],['pear','Pear'],['sweet-potato','Sweet potato']].map(([key, name]) => ({key, name, src: `assets/food/${key}.png`}));
-const btn = document.getElementById('journalBtn'), wrap = document.getElementById('bookWrap');
-document.getElementById('count').textContent = FOODS.length;
-const SEGMENTS = 40, segs = document.getElementById('segs');
-for (let i = 0; i < SEGMENTS; i++) {
-  const el = document.createElement('i'), f = FOODS[i];
-  el.style.setProperty('--i', i);
-  if (f) { el.className = 'on'; el.title = f.name; }
-  segs.appendChild(el);
+const STORE = 'housebiom-log-v1';
+let log = {good: [], bad: []};
+try { const v = JSON.parse(localStorage.getItem(STORE) || 'null'); if (v && Array.isArray(v.good) && Array.isArray(v.bad)) log = v; } catch (e) {}
+const validIcon = i => ICONS.includes(i);
+log.good = log.good.filter(x => x && typeof x.name === 'string' && validIcon(x.icon));
+log.bad = log.bad.filter(x => x && typeof x.name === 'string' && validIcon(x.icon));
+const save = () => { try { localStorage.setItem(STORE, JSON.stringify(log)); } catch (e) {} };
+const BASE_GOOD = FOODS.length;
+function addGoodFood(x) {
+  const img = new Image(); img.src = `assets/pack/${x.icon}.png`;
+  const f = {key: 'u-' + x.icon + '-' + FOODS.length, name: x.name, img, aura: null, user: x};
+  img.onload = () => makeAura(f);
+  FOODS.push(f);
+  return f;
 }
-document.getElementById('strength').setAttribute('aria-label', `Strength: ${Math.min(FOODS.length, SEGMENTS)} of ${SEGMENTS} foods logged successfully`);
-function fillGrid(el, items, min) {
-  const n = Math.max(min, Math.ceil(items.length / 4) * 4);
+log.good.forEach(addGoodFood);
+const badItems = () => [...BAD, ...log.bad.map(x => ({key: 'u', name: x.name, src: `assets/pack/${x.icon}.png`, user: x}))];
+
+const btn = document.getElementById('journalBtn'), wrap = document.getElementById('bookWrap');
+const segs = document.getElementById('segs');
+function renderStrength() {
+  const n = FOODS.length, total = Math.max(40, Math.ceil(n / 10) * 10);
+  segs.innerHTML = '';
+  for (let i = 0; i < total; i++) {
+    const el = document.createElement('i'), f = FOODS[i];
+    el.style.setProperty('--i', i);
+    if (f) { el.className = 'on'; el.title = f.name; }
+    segs.appendChild(el);
+  }
+  document.getElementById('strength').setAttribute('aria-label', `Strength: ${n} of ${total} foods logged successfully`);
+  document.getElementById('count').textContent = n;
+}
+let justAdded = null;
+function fillGrid(el, items, min, side) {
+  el.innerHTML = '';
+  const n = Math.max(min, (Math.floor(items.length / 3) + 2) * 3);
   for (let i = 0; i < n; i++) {
-    const c = document.createElement('div'), f = items[i];
-    if (f) { c.className = 'cell on'; c.innerHTML = '<img alt=""><span></span>'; c.querySelector('img').src = f.src || f.img.src; c.querySelector('span').textContent = f.name; }
-    else c.className = 'cell empty';
-    el.appendChild(c);
+    const f = items[i];
+    if (f) {
+      const c = document.createElement('div');
+      c.className = 'cell on' + (f.user && f.user === justAdded ? ' fresh' : ''); c.tabIndex = 0;
+      c.innerHTML = '<img alt=""><span></span>';
+      c.querySelector('img').src = f.src || f.img.src; c.querySelector('span').textContent = f.name;
+      c.addEventListener('mouseenter', () => sound.hop()); c.addEventListener('focus', () => sound.hop());
+      if (f.user) {
+        const x = document.createElement('button'); x.type = 'button'; x.className = 'rm'; x.textContent = '×';
+        x.setAttribute('aria-label', 'Remove ' + f.name);
+        x.addEventListener('click', e => { e.stopPropagation(); removeEntry(side, f.user); });
+        c.appendChild(x);
+      }
+      el.appendChild(c);
+    } else {
+      const c = document.createElement('button'); c.type = 'button'; c.className = 'cell empty';
+      c.setAttribute('aria-label', side === 'good' ? 'Log a new good food' : 'Log a new bad food');
+      c.innerHTML = '<span class="plus">+</span>';
+      c.addEventListener('click', () => openPicker(side));
+      el.appendChild(c);
+    }
   }
 }
-fillGrid(document.getElementById('goodGrid'), FOODS, 20);
-fillGrid(document.getElementById('badGrid'), BAD, 8);
+function renderJournal() {
+  fillGrid(document.getElementById('goodGrid'), FOODS, 21, 'good');
+  fillGrid(document.getElementById('badGrid'), badItems(), 9, 'bad');
+  renderStrength();
+}
+function removeEntry(side, entry) {
+  log[side] = log[side].filter(x => x !== entry); save();
+  if (side === 'good') { const i = FOODS.findIndex(f => f.user === entry); if (i >= 0) FOODS.splice(i, 1); bag = []; for (let j = floats.length - 1; j >= 0; j--) if (floats[j].f.user === entry) floats.splice(j, 1); }
+  renderJournal();
+}
+
+/* picker */
+const picker = document.getElementById('picker'), pickGrid = document.getElementById('pickGrid'), pickSearch = document.getElementById('pickSearch'), pickName = document.getElementById('pickName'), pickAdd = document.getElementById('pickAdd');
+let pickSide = 'good', pickIcon = null, nameEdited = false;
+pickGrid.innerHTML = ICONS.map(i => `<button type="button" class="pk" data-i="${i}" title="${human(i)}" aria-label="${human(i)}"><img src="assets/pack/${i}.png" alt="" loading="lazy"></button>`).join('');
+function openPicker(side) {
+  pickSide = side; pickIcon = null; nameEdited = false;
+  document.getElementById('pickTitle').textContent = side === 'good' ? 'Log a good food' : 'Log a bad food';
+  picker.classList.toggle('bad', side === 'bad');
+  pickSearch.value = ''; pickName.value = ''; filterPicker(); updateAdd();
+  pickGrid.querySelectorAll('.pk.sel').forEach(b => b.classList.remove('sel'));
+  picker.hidden = false; pickSearch.focus(); sound.blip();
+}
+function closePicker() { picker.hidden = true; }
+function filterPicker() {
+  const q = pickSearch.value.trim().toLowerCase().replace(/\s+/g, '_');
+  let shown = 0;
+  pickGrid.querySelectorAll('.pk').forEach(b => { b.hidden = !!q && !b.dataset.i.includes(q); if (!b.hidden) shown++; });
+  const none = !!q && !shown;
+  if (none) pickGrid.querySelectorAll('.pk').forEach(b => b.hidden = false);
+  document.getElementById('pickHint').hidden = !none;
+}
+function updateAdd() { pickAdd.disabled = !(pickIcon && pickName.value.trim()); }
+pickSearch.addEventListener('input', () => { filterPicker(); if (!nameEdited && !pickIcon) pickName.value = pickSearch.value; updateAdd(); });
+pickName.addEventListener('input', () => { nameEdited = true; updateAdd(); });
+pickGrid.addEventListener('click', e => {
+  const b = e.target.closest('.pk'); if (!b) return;
+  pickGrid.querySelectorAll('.pk.sel').forEach(x => x.classList.remove('sel'));
+  b.classList.add('sel'); pickIcon = b.dataset.i; sound.hop();
+  if (!nameEdited) pickName.value = human(pickIcon);
+  updateAdd();
+});
+document.getElementById('pickCancel').addEventListener('click', closePicker);
+document.getElementById('pickForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const name = pickName.value.trim().slice(0, 24);
+  if (!pickIcon || !name) return;
+  const entry = {name, icon: pickIcon, t: Date.now()};
+  log[pickSide].push(entry); save(); justAdded = entry;
+  if (pickSide === 'good') { const f = addGoodFood(entry); floats.push({f, x: W + 4, ph: 0}); bag = []; sound.sparkle(); }
+  else sound.hop();
+  closePicker(); renderJournal();
+});
+renderJournal();
+
 let lastFocus = null;
 function toggle(open) {
   const was = wrap.classList.contains('on'), on = open ?? !was;
   if (on === was) return;
+  if (!on) closePicker();
   wrap.classList.toggle('on', on); wrap.setAttribute('aria-hidden', String(!on));
   if (typeof sound !== 'undefined') sound.page();
   if (on) { lastFocus = document.activeElement; document.getElementById('closeBook').focus(); }
@@ -160,7 +295,7 @@ function toggle(open) {
 btn.addEventListener('click', () => toggle(true));
 document.getElementById('closeBook').addEventListener('click', () => toggle(false));
 wrap.addEventListener('click', e => { if (e.target === wrap) toggle(false); });
-addEventListener('keydown', e => { if (e.key === 'Escape') toggle(false); });
+addEventListener('keydown', e => { if (e.key === 'Escape') { if (!picker.hidden) closePicker(); else toggle(false); } });
 /* floating him yourself: keys or drag; he drifts on his own when left alone */
 let px = null, py = null, goal = null, lastInput = -99, face = 1, pose = 0, poseUntil = 0, nextPoseAt = 8;
 const keys = new Set();
@@ -261,12 +396,6 @@ const sound = (() => {
 const soundBtn = document.getElementById('soundBtn');
 soundBtn.addEventListener('click', () => { const on = sound.toggle(); soundBtn.setAttribute('aria-pressed', String(on)); soundBtn.setAttribute('aria-label', on ? 'Sound on' : 'Sound off'); if (on) sound.blip(); });
 
-/* journal cells react */
-document.querySelectorAll('.cell.on').forEach(c => {
-  c.tabIndex = 0;
-  c.addEventListener('mouseenter', () => sound.hop());
-  c.addEventListener('focus', () => sound.hop());
-});
 
 /* canvas sizing at an integer pixel scale */
 let W = 0, H = 0, k = 1, top = 0, topCol = '#4a0f1a', botCol = '#4a0f1a';
@@ -338,7 +467,7 @@ function draw(now) {
   }
 
   /* the boy drifts on his own */
-  const ax = W * .4 + (still ? 0 : Math.sin(t * .23) * W * .08), ay = top + 50 + (still ? 0 : Math.sin(t * .41) * 6);
+  const ax = W * .4 + (still ? 0 : Math.sin(t * .23) * W * .08), ay = top + 56 + (still ? 0 : Math.sin(t * .41) * 6);
   if (px === null) { px = ax; py = ay; }
   let vx = 0, vy = 0;
   if (keys.has('arrowleft') || keys.has('a')) vx -= 1;
@@ -348,7 +477,7 @@ function draw(now) {
   if (vx || vy) { const m = Math.hypot(vx, vy); px += vx / m * 60 * dt; py += vy / m * 60 * dt; lastInput = t; }
   else if (goal) { const gx = goal.x - 6, gy = goal.y, d = Math.hypot(gx - px, gy - py); if (d > 1) { const st = Math.min(d, 70 * dt); px += (gx - px) / d * st; py += (gy - py) / d * st; } lastInput = t; }
   else if (t - lastInput > 3) { const e = Math.min(1, dt * .8); px += (ax - px) * e; py += (ay - py) * e; }
-  px = Math.max(26, Math.min(W - 34, px)); py = Math.max(top + 28, Math.min(top + 62, py));
+  px = Math.max(26, Math.min(W - 34, px)); py = Math.max(top + 24, Math.min(top + 68, py));
   const moving = !!(vx || vy || (goal && Math.hypot(goal.x - 6 - px, goal.y - py) > 2));
   if (vx) face = vx > 0 ? 1 : -1;
   else if (goal && Math.abs(goal.x - 6 - px) > 3) face = goal.x - 6 > px ? 1 : -1;
@@ -358,9 +487,9 @@ function draw(now) {
     g.fillStyle = 'rgba(255,235,210,.55)';
     for (const l of lines) {
       l.t += dt * 1.2;
-      if (l.t > 1) { l.t = 0; l.y = ky - 6 + Math.floor(Math.random() * 26); l.len = 4 + Math.floor(Math.random() * 7); }
-      if (l.len && face > 0) g.fillRect(kx - 34 - Math.floor(l.t * 30), l.y, l.len, 1);
-      if (l.len && face < 0) g.fillRect(kx + 30 + Math.floor(l.t * 30), l.y, l.len, 1);
+      if (l.t > 1) { l.t = 0; l.y = ky - 4 + Math.floor(Math.random() * 20); l.len = 4 + Math.floor(Math.random() * 7); }
+      if (l.len && face > 0) g.fillRect(kx - 28 - Math.floor(l.t * 30), l.y, l.len, 1);
+      if (l.len && face < 0) g.fillRect(kx + 24 + Math.floor(l.t * 30), l.y, l.len, 1);
     }
   }
   let frame = 0;
