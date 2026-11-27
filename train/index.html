@@ -81,7 +81,7 @@ canvas{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);image-r
   </form>
 </div>
 <div class="veil" id="veil"></div>
-<canvas id="c" role="img" aria-label="The training world: a calm turquoise lake under big clouds, seen from a ruined lookout. The winged hero stands on a small stone platform with his back to you, holding two rowing oars, while a rower in a single scull rows slowly along the horizon."></canvas>
+<canvas id="c" role="img" aria-label="The training world: a calm turquoise lake under big clouds, seen from a ruined lookout. The winged hero stands on a small stone platform with his back to you, holding two rowing oars, while he and his friend row a double scull slowly along the horizon."></canvas>
 <script src="../assets/sound.js"></script>
 <script>
 {
@@ -92,9 +92,9 @@ const BGS = 2, BG_W = 250, BG_H = 140, FRAME_W = 51, FRAME_H = 55, ANCHOR_X = 25
 const LAKE = {x0: 28, x1: 208, y0: 101, y1: 120};
 const STAND_W = 41, STAND_H = 65, STAND_AX = 18, STAND_FEET = 64;
 const LAND = {x: 125, y: 115};
-const SCULL_W = 26, SCULL_H = 17, SCULL_HX = 2, SCULL_HY = 11;
+const SCULL_W = 40, SCULL_H = 24, SCULL_HX = 1, SCULL_HY = 16;
 const bg = new Image(), hero = new Image(), stand = new Image(), scull = new Image();
-bg.src = '../assets/px-train.png'; hero.src = '../assets/px-hero.png'; stand.src = '../assets/px-stand.png'; scull.src = '../assets/px-scull.png';
+bg.src = '../assets/px-train.png'; hero.src = '../assets/px-hero.png'; stand.src = '../assets/px-stand.png'; scull.src = '../assets/px-double.png';
 sound.bindButton(document.getElementById('soundBtn'));
 
 /* arriving through the portal, and going back */
@@ -260,7 +260,7 @@ function draw(now) {
     }
   }
 
-  /* a single scull rowing across the lake at UT2 pace (20 strokes a minute).
+  /* a double scull (Jawad at stroke, his friend at bow) rowing across the lake at UT2 pace (20 strokes a minute).
      The rower faces right, so the boat travels left, far out near the horizon.
      Frames: catch, early drive, mid drive, finish, recovery, late recovery (drive : recovery about 1 : 2). */
   if (scull.naturalWidth) {
@@ -269,7 +269,7 @@ function draw(now) {
     let st = still ? 0 : t % T, f = 0;
     while (f < 5 && st > DUR[f]) { st -= DUR[f]; f++; }
     const glide = still ? 0 : Math.sin((t % T) / T * Math.PI * 2) * .6;
-    const xr = wx(LAKE.x1) - 20, xl = wx(LAKE.x0) + 4;
+    const xr = wx(LAKE.x1) - 34, xl = wx(LAKE.x0) + 4;
     const bx = Math.round(xr + (xl - xr) * ph - glide), by = wy(LAKE.y0) + 3;
     const fade = Math.min(1, ph / .05, (1 - ph) / .05);
     g.save(); g.globalAlpha = Math.max(0, fade);
