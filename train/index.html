@@ -83,6 +83,7 @@ canvas{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);image-r
 <div class="veil" id="veil"></div>
 <canvas id="c" role="img" aria-label="The training world: a calm turquoise lake under big clouds, seen from a ruined lookout. The winged hero stands on a small stone platform with his back to you, holding two rowing oars, while he and his friend row a double scull slowly along the horizon."></canvas>
 <script src="../assets/sound.js"></script>
+<script src="../assets/lake-sound.js"></script>
 <script>
 {
 const cv = document.getElementById('c'), g = cv.getContext('2d');
@@ -312,6 +313,12 @@ function draw(now) {
       if (prevF === 3 && f === 4 && !still) puddles.push({x: ex, y: Math.round(oy + py + 6), t0: t});
       g.fillStyle = inWater ? '#3a8fd0' : '#5aa8e0'; g.fillRect(ex - 1, ey, 3, inWater ? 2 : 1);
       if (f === 0 && fp < .4 && !still) { g.fillStyle = 'rgba(255,255,255,.75)'; g.fillRect(ex - 2, ey - 1, 5, 1); }
+    }
+    /* boat sounds, panned to where the boat is on the lake */
+    if (f !== prevF && prevF !== -1 && window.HBLake) {
+      const pan = (bx / W) * 2 - 1;
+      if (f === 0) { HBLake.row('catch', pan); HBLake.row('drive', pan, T / 3); }
+      if (f === 4) { HBLake.row('finish', pan); HBLake.row('slide', pan, T * 2 / 3 - .2); }
     }
     prevF = f;
     g.restore();

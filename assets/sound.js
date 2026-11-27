@@ -1,7 +1,7 @@
 /* Housebiom shared sound: synthesized chiptune ambience and effects */
 (function () {
 const sound = (() => {
-  let ac = null, master = null, on = false, timer = 0, step = 0;
+  let ac = null, master = null, on = false, timer = 0, step = 0, ambience = null, amb = null;
   const NOTES = [523.25, 587.33, 659.25, 783.99, 880, 1046.5];
   const TUNE = [0, 2, 4, 2, 3, 1, 2, -1, 0, 4, 5, 4, 3, 2, 1, -1];
   function tone(freq, dur, type = 'triangle', vol = .05, when = 0, slide = 0) {
@@ -47,8 +47,8 @@ const sound = (() => {
     toggle() {
       if (!ac) { const A = window.AudioContext || window.webkitAudioContext; if (!A) return false; ac = new A(); master = ac.createGain(); master.gain.value = .8; master.connect(ac.destination); }
       on = !on;
-      if (on) { ac.resume(); startHum(); timer = setInterval(tick, 430); }
-      else { clearInterval(timer); if (hum) hum.stop(); hum = null; }
+      if (on) { ac.resume(); if (ambience) amb = ambience(ac, master); else { startHum(); timer = setInterval(tick, 430); } }
+      else { clearInterval(timer); if (hum) hum.stop(); hum = null; if (amb) amb.stop(); amb = null; }
       return on;
     },
     blip() { tone(988, .07, 'square', .025); tone(1319, .09, 'square', .02, .05); },
@@ -56,6 +56,9 @@ const sound = (() => {
     sparkle() { [0, 2, 4, 5].forEach((n, i) => tone(NOTES[n] * 2, .18, 'triangle', .03, i * .07)); },
     page() { noise(.28, .12, 2400, 600); },
     _noise: noise,
+    /* a world can bring its own atmosphere instead of the default chiptune */
+    useAmbience(fn) { ambience = fn; },
+    audio() { return on && ac ? {ac, master} : null; },
     thud() { tone(90, .25, 'square', .05, 0, .5); noise(.15, .08, 400, 120); }
   };
 })();
