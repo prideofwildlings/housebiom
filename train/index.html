@@ -31,7 +31,7 @@ canvas{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);image-r
 <button type="button" class="sound" id="soundBtn" aria-pressed="false" aria-label="Sound"><svg viewBox="0 0 16 16" width="32" height="32" shape-rendering="crispEdges" aria-hidden="true"><rect x="2" y="6" width="3" height="4" fill="#fff3dc"/><rect x="5" y="5" width="1" height="6" fill="#fff3dc"/><rect x="6" y="4" width="1" height="8" fill="#fff3dc"/><rect x="7" y="3" width="1" height="10" fill="#fff3dc"/><g class="w" fill="#8ff0c8"><rect x="10" y="6" width="1" height="4"/><rect x="12" y="4" width="1" height="8"/><rect x="11" y="5" width="1" height="1"/><rect x="11" y="10" width="1" height="1"/></g><g class="x" fill="#ff8a8a"><rect x="10" y="6" width="1" height="1"/><rect x="11" y="7" width="1" height="1"/><rect x="12" y="8" width="1" height="1"/><rect x="13" y="9" width="1" height="1"/><rect x="13" y="6" width="1" height="1"/><rect x="12" y="7" width="1" height="1"/><rect x="11" y="8" width="1" height="1"/><rect x="10" y="9" width="1" height="1"/></g></svg></button>
 <div class="help" id="help">Arrow keys or drag to fly</div>
 <div class="veil" id="veil"></div>
-<canvas id="c" role="img" aria-label="The training world: a calm turquoise lake under big clouds, seen from a ruined lookout with a small stone platform. Use the arrow keys or drag to fly the winged hero."></canvas>
+<canvas id="c" role="img" aria-label="The training world: a calm turquoise lake under big clouds, seen from a ruined lookout. The winged hero stands on a small stone platform with his back to you, holding two rowing oars, while a racing shell rows along the horizon. Use the arrow keys or drag to fly; leave him and he lands back on the platform."></canvas>
 <script src="../assets/sound.js"></script>
 <script>
 {
@@ -40,8 +40,10 @@ const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const sound = window.HBSound;
 const BGS = 2, BG_W = 250, BG_H = 140, FRAME_W = 51, FRAME_H = 55, ANCHOR_X = 25, ANCHOR_Y = 22;
 const LAKE = {x0: 28, x1: 208, y0: 101, y1: 120};
-const bg = new Image(), hero = new Image();
-bg.src = '../assets/px-train.png'; hero.src = '../assets/px-hero.png';
+const STAND_W = 41, STAND_H = 65, STAND_AX = 18, STAND_FEET = 64;
+const LAND = {x: 125, y: 115};
+const bg = new Image(), hero = new Image(), stand = new Image();
+bg.src = '../assets/px-train.png'; hero.src = '../assets/px-hero.png'; stand.src = '../assets/px-stand.png';
 sound.bindButton(document.getElementById('soundBtn'));
 
 /* arriving through the portal, and going back */
@@ -70,7 +72,7 @@ addEventListener('resize', fit); fit();
 const wx = x => left + x * BGS, wy = y => top + y * BGS;
 
 /* controls: keys or drag; he wanders when left alone */
-let px = null, py = null, goal = null, lastInput = -99, face = 1, pose = 0, poseUntil = 0, nextPoseAt = 8, wander = null, wanderAt = 0, speed = 0;
+let standing = true, px = null, py = null, goal = null, lastInput = -99, face = 1, pose = 0, poseUntil = 0, nextPoseAt = 8, wander = null, wanderAt = 0, speed = 0;
 const keys = new Set();
 const toNative = e => { const r = cv.getBoundingClientRect(); return {x: (e.clientX - r.left) / k, y: (e.clientY - r.top) / k}; };
 cv.addEventListener('pointerdown', e => { cv.setPointerCapture(e.pointerId); goal = toNative(e); });
@@ -109,39 +111,55 @@ function draw(now) {
     }
   }
 
-  /* a racing shell far out on the lake, rowing slowly along the horizon */
+  /* a single scull far out on the lake. It always travels one way, bow first; the rower sits
+     facing the stern and pulls; at the far end it fades out and a new pass begins. */
   {
-    const span = LAKE.x1 - LAKE.x0 - 24, cyc = 140, ph = still ? .3 : (t % cyc) / cyc, dir = ph < .5 ? 1 : -1;
-    const bx = Math.round(wx(LAKE.x0 + 12 + span * (ph < .5 ? ph * 2 : 2 - ph * 2))), by = wy(LAKE.y0) + 3;
-    const stroke = still ? 0 : Math.floor(t * 1.6) % 2;
-    if (!still) { g.fillStyle = 'rgba(240,255,252,.45)'; for (let i = 1; i <= 3; i++) g.fillRect(bx - dir * (8 + i * 4), by + 1, 3, 1); }
-    g.fillStyle = '#f6f4ee'; g.fillRect(bx - 7, by, 15, 1);
+    const cyc = 90, ph = still ? .35 : (t % cyc) / cyc;
+    const x0 = LAKE.x0 + 10, x1 = LAKE.x1 - 10;
+    const s4 = still ? 0 : (t * 1.4) % 1;              /* stroke cycle: 0 catch, .45 finish, then recovery */
+    const surge = still ? 0 : (s4 < .45 ? s4 / .45 : 1 + (s4 - .45) / .55 * 0) ;
+    const bx = Math.round(wx(x0 + (x1 - x0) * ph) + surge * 0), by = wy(LAKE.y0) + 3;
+    const fade = Math.min(1, ph / .04, (1 - ph) / .04);
+    g.save(); g.globalAlpha = Math.max(0, fade);
+    /* wake trails behind the stern (left; the bow points right) */
+    if (!still) { g.fillStyle = 'rgba(240,255,252,.45)'; for (let i = 1; i <= 3; i++) g.fillRect(bx - 8 - i * 4, by + 1, 3, 1); }
+    g.fillStyle = '#f6f4ee'; g.fillRect(bx - 7, by, 15, 1); g.fillRect(bx + 8, by, 1, 1);
     g.fillStyle = '#c0303a'; g.fillRect(bx - 6, by + 1, 13, 1);
+    /* rower faces the stern: leans toward the stern at the catch, toward the bow at the finish */
+    const drive = s4 < .45, k1 = drive ? s4 / .45 : 1 - (s4 - .45) / .55;
+    const lean = Math.round(-1 + k1 * 2);                    /* -1 stern ... +1 bow */
     g.fillStyle = '#2a2034'; g.fillRect(bx, by - 3, 1, 3);
-    g.fillStyle = '#e8b890'; g.fillRect(bx, by - 4, 1, 1);
+    g.fillStyle = '#e8b890'; g.fillRect(bx + lean, by - 4, 1, 1);
+    /* oar: blade toward the bow at the catch, sweeps to the stern through the drive, then lifts and returns */
+    const bladeX = Math.round(3 - k1 * 6), bladeY = drive ? 1 : -1;
     g.fillStyle = '#6a4a30';
-    const o = stroke ? dir : -dir;
-    g.fillRect(bx + o, by - 1, 1, 1); g.fillRect(bx + o * 2, by, 1, 1); g.fillRect(bx + o * 3, by + 1, 1, 1);
-    if (!still && stroke) { g.fillStyle = 'rgba(255,255,255,.8)'; g.fillRect(bx + o * 4, by + 1, 1, 1); }
+    const steps = Math.max(1, Math.abs(bladeX));
+    for (let i = 1; i <= steps; i++) g.fillRect(bx + Math.round(bladeX * i / steps), by - 1 + Math.round((bladeY + 1) * i / steps), 1, 1);
+    if (!still && drive) { g.fillStyle = 'rgba(255,255,255,.85)'; g.fillRect(bx + bladeX, by + 1, 1, 1); }
+    g.restore();
   }
 
   /* hero */
   const minX = 26, maxX = W - 34, minY = top + 30, maxY = wy(118) - 30;
-  if (px === null) { px = wx(BG_W / 2) + 6; py = wy(100) - 26; lastInput = t + 1; }
+  const landX = wx(LAND.x) + 1, landY = wy(LAND.y) - 26;
+  if (px === null) { px = landX; py = landY; }
   const ox = px, oy = py;
   let vx = 0, vy = 0;
   if (keys.has('arrowleft') || keys.has('a')) vx -= 1;
   if (keys.has('arrowright') || keys.has('d')) vx += 1;
   if (keys.has('arrowup') || keys.has('w')) vy -= 1;
   if (keys.has('arrowdown') || keys.has('s')) vy += 1;
-  if (vx || vy) { const m = Math.hypot(vx, vy); px += vx / m * 60 * dt; py += vy / m * 60 * dt; lastInput = t; wander = null; }
-  else if (goal) { const gx = goal.x - 6, gy = goal.y, d = Math.hypot(gx - px, gy - py); if (d > 1) { const st = Math.min(d, 70 * dt); px += (gx - px) / d * st; py += (gy - py) / d * st; } lastInput = t; wander = null; }
-  else if (!still && t - lastInput > 3) {
-    if (!wander || t > wanderAt) { wander = {x: minX + Math.random() * (maxX - minX), y: minY + 6 + Math.random() * (maxY - minY - 12)}; wanderAt = t + 7 + Math.random() * 6; }
-    const dx = wander.x - px, dy = wander.y - py, d = Math.hypot(dx, dy);
-    if (d > 2) { const st = Math.min(d, Math.min(22, d * .9) * dt); px += dx / d * st; py += dy / d * st; }
+  if (vx || vy || goal) { if (standing) { standing = false; py -= 6; } }
+  if (standing) { px = landX; py = landY; }
+  else if (vx || vy) { const m = Math.hypot(vx, vy); px += vx / m * 60 * dt; py += vy / m * 60 * dt; lastInput = t; }
+  else if (goal) { const gx = goal.x - 6, gy = goal.y, d = Math.hypot(gx - px, gy - py); if (d > 1) { const st = Math.min(d, 70 * dt); px += (gx - px) / d * st; py += (gy - py) / d * st; } lastInput = t; }
+  else if (t - lastInput > 3) {
+    /* left alone: fly back to the platform and land */
+    const dx = landX - px, dy = landY - py, d = Math.hypot(dx, dy);
+    if (d > 1.5 && !still) { const st = Math.min(d, Math.min(40, 8 + d * .9) * dt); px += dx / d * st; py += dy / d * st; }
+    else standing = true;
   }
-  px = Math.max(minX, Math.min(maxX, px)); py = Math.max(minY, Math.min(maxY, py));
+  if (!standing) { px = Math.max(minX, Math.min(maxX, px)); py = Math.max(minY, Math.min(maxY, py)); }
   const vxNow = dt ? (px - ox) / dt : 0;
   speed = speed * .85 + (dt ? Math.hypot(px - ox, py - oy) / dt : 0) * .15;
   const moving = speed > 6;
@@ -149,7 +167,7 @@ function draw(now) {
   const kx = Math.round(px), ky = Math.round(py) + (still ? 0 : Math.round(Math.sin(t * 2.2) * 1.5));
 
   /* his reflection on the lake when he flies low over it */
-  if (hero.naturalWidth && py > wy(LAKE.y0) - 60 && px > wx(LAKE.x0) && px < wx(LAKE.x1)) {
+  if (!standing && hero.naturalWidth && py > wy(LAKE.y0) - 60 && px > wx(LAKE.x0) && px < wx(LAKE.x1)) {
     const ry = wy(LAKE.y0) * 2 - ky + 6;
     g.save(); g.beginPath(); g.rect(wx(LAKE.x0), wy(LAKE.y0) + 1, (LAKE.x1 - LAKE.x0) * BGS, (112 - LAKE.y0) * BGS); g.clip();
     g.globalAlpha = .18; g.translate(kx, ry); g.scale(face, -1);
@@ -173,7 +191,12 @@ function draw(now) {
       frame = t < poseUntil ? pose : ((t * .8) % 1 < .28 ? 1 : 0);
     }
   }
-  if (hero.naturalWidth) {
+  if (standing) {
+    if (stand.naturalWidth) {
+      const sf = still ? 0 : Math.floor(t * .9) % 2;
+      g.drawImage(stand, sf * STAND_W, 0, STAND_W, STAND_H, wx(LAND.x) - STAND_AX, wy(LAND.y) - STAND_FEET, STAND_W, STAND_H);
+    }
+  } else if (hero.naturalWidth) {
     g.save(); g.translate(kx, ky); g.scale(face, 1);
     g.drawImage(hero, frame * FRAME_W, 0, FRAME_W, FRAME_H, -ANCHOR_X, -ANCHOR_Y, FRAME_W, FRAME_H);
     g.restore();
