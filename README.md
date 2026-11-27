@@ -9,3 +9,7 @@ Open `index.html` in a browser, or visit the GitHub Pages site.
 
 ## Art
 All scene layers live in `assets/` as separate images (glow, walls, water, raft, frame, keeper, microbes `m0–m7`, foods `f0–f11`). Replace a file with your own drawing of the same name and size to update the scene.
+
+## Credits
+- Food icons: "16x16 Food" by ARoachIFoundOnMyPillow, from OpenGameArt — CC0 (public domain).
+- Background and boy sprites: generated for this project and cleaned into pixel art.

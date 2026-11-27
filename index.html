@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Housebiom</title>
 <link rel="artifact-thumbnail" href="thumb.jpg">
+<link href="https://fonts.googleapis.com/css2?family=Silkscreen&display=swap" rel="stylesheet">
 <style>
 /* VOICE: playful, retro, a little magical
    IDEA: a Game Boy Advance era side-scroller set inside the gut
@@ -14,16 +15,44 @@
 :root{color-scheme:dark}
 *{box-sizing:border-box;margin:0}
 html,body{height:100%;background:#4a0f1a;overflow:hidden}
+.tag{position:absolute;z-index:2;transform:translate(-50%,-100%);font:16px/1.2 Silkscreen,monospace;color:#fff3dc;background:#2a0a12;border:3px solid #fff3dc;box-shadow:3px 3px 0 #120306;padding:6px 10px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .2s}
+.tag.on{opacity:1}.tag i{font-style:normal;color:#8ff0c8}.tag.bad i{color:#ff8a8a}
 canvas{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);image-rendering:pixelated;image-rendering:crisp-edges;cursor:pointer;touch-action:manipulation}
 </style>
 </head>
 <body>
+<div class="tag" id="tag"></div>
 <canvas id="c" role="img" aria-label="A boy with a net flying through a scrolling tunnel inside the gut. Tap to swing the net."></canvas>
 <script>
 {
 const cv = document.getElementById('c'), g = cv.getContext('2d');
 const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const BG_H = 145, TILE_W = 514, FRAME_W = 48, FRAME_H = 49, ANCHOR_X = 18, ANCHOR_Y = 29;
+const FOODS = [
+  ['chicken','Chicken'],['rice','Rice'],['spinach','Spinach'],['carrot','Carrot'],['banana','Banana'],['eggs','Eggs'],['olive-oil','Olive oil'],
+  ['kiwi','Kiwi'],['watermelon','Watermelon'],['rice-cake','Rice cake'],['potato','Potato'],['peanut-butter','Peanut butter'],['pecan','Pecan'],['pumpkin-seed','Pumpkin seed'],
+  ['oat','Oat',1],['pear','Pear',1],['sweet-potato','Sweet potato',1]
+].map(([key, name, bad]) => { const img = new Image(); img.src = `assets/food/${key}.png`; return {key, name, bad: !!bad, img, dark: null}; });
+function darken(f) {
+  const c = document.createElement('canvas'); c.width = c.height = 16;
+  const x = c.getContext('2d'); x.drawImage(f.img, 0, 0);
+  try {
+    const d = x.getImageData(0, 0, 16, 16);
+    for (let i = 0; i < d.data.length; i += 4) { const v = (d.data[i] + d.data[i+1] + d.data[i+2]) / 3; d.data[i] = v * .55 + 30; d.data[i+1] = v * .45; d.data[i+2] = v * .5 + 10; }
+    x.putImageData(d, 0, 0);
+  } catch (e) {}
+  f.dark = c;
+}
+FOODS.forEach(f => { if (f.bad) f.img.onload = () => darken(f); });
+const good = FOODS.filter(f => !f.bad), bad = FOODS.filter(f => f.bad);
+let bag = [];
+function nextFood() {
+  if (Math.random() < .18) return bad[Math.floor(Math.random() * bad.length)];
+  if (!bag.length) bag = good.slice().sort(() => Math.random() - .5);
+  return bag.pop();
+}
+const floats = [];
+let spawnAt = 0;
 const bg = new Image(), kid = new Image();
 bg.src = 'assets/px-bg.png'; kid.src = 'assets/px-kid.png';
 
@@ -55,12 +84,27 @@ const lines = Array.from({length: 4}, (_, i) => ({y: 0, x: 0, len: 0, t: i / 4})
 
 let action = null, actionUntil = 0, nextCheer = 9000;
 function swing(now) { action = 2; actionUntil = now + 380; }
-cv.addEventListener('pointerdown', () => swing(performance.now()));
+const tag = document.getElementById('tag'); let tagT;
+function showTag(f, px, py) {
+  tag.className = 'tag' + (f.bad ? ' bad' : '');
+  tag.innerHTML = '<span></span> <i></i>';
+  tag.firstChild.textContent = f.name;
+  tag.lastChild.textContent = f.bad ? '✗ not for now' : '✓ safe';
+  tag.style.left = Math.max(90, Math.min(innerWidth - 90, px)) + 'px';
+  tag.style.top = Math.max(50, py - 12) + 'px';
+  tag.classList.add('on'); clearTimeout(tagT); tagT = setTimeout(() => tag.classList.remove('on'), 2200);
+}
+cv.addEventListener('pointerdown', e => {
+  const r = cv.getBoundingClientRect(), nx = (e.clientX - r.left) / k, ny = (e.clientY - r.top) / k;
+  const hit = floats.find(f => nx > f.x - 3 && nx < f.x + 19 && ny > top + 82 && ny < top + 106);
+  if (hit) showTag(hit.f, r.left + (hit.x + 8) * k, r.top + (top + 86) * k);
+  else swing(performance.now());
+});
 addEventListener('keydown', e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); swing(performance.now()); } });
 
-let start = performance.now();
+let start = performance.now(), lastT = 0;
 function draw(now) {
-  const t = (now - start) / 1000;
+  const t = (now - start) / 1000, dt = Math.min(.05, t - lastT); lastT = t;
   g.fillStyle = topCol; g.fillRect(0, 0, W, top + 1);
   g.fillStyle = botCol; g.fillRect(0, top + BG_H - 1, W, H - top - BG_H + 1);
   const scroll = still ? 0 : Math.floor(t * 14) % TILE_W;
@@ -74,6 +118,25 @@ function draw(now) {
       const sx = ((b.x - t * 14) % TILE_W + TILE_W) % TILE_W;
       const y = top + 96 - Math.floor(b.life * 14);
       if (b.life < .85) for (let x = sx; x < W; x += TILE_W) g.fillRect(Math.floor(x), y, 1, 1);
+    }
+  }
+
+  if (!still && t > spawnAt) { floats.push({f: nextFood(), x: W + 4, ph: Math.random() * 6}); spawnAt = t + 2 + Math.random() * 1.8; }
+  if (still && !floats.length) for (let i = 0; i < 6; i++) floats.push({f: good[i * 2], x: 12 + i * Math.floor(W / 6), ph: i});
+  for (let i = floats.length - 1; i >= 0; i--) {
+    const o = floats[i];
+    if (!still) o.x -= dt * 20;
+    if (o.x < -20) { floats.splice(i, 1); continue; }
+    const fb = still ? 0 : Math.round(Math.sin(t * 2 + o.ph));
+    const fx = Math.round(o.x), wl = top + 101 + fb;
+    const src = o.f.bad && o.f.dark ? o.f.dark : o.f.img;
+    if (src.width || src.naturalWidth) g.drawImage(src, 0, 0, 16, 13, fx, wl - 13, 16, 13);
+    g.fillStyle = 'rgba(190,255,230,.75)';
+    g.fillRect(fx + 1, wl, 4, 1); g.fillRect(fx + 9, wl, 5, 1);
+    if (o.f.bad) {
+      g.fillStyle = '#ff5a5a';
+      const cx = fx + 12, cy = wl - 17;
+      g.fillRect(cx, cy, 1, 1); g.fillRect(cx + 2, cy, 1, 1); g.fillRect(cx + 1, cy + 1, 1, 1); g.fillRect(cx, cy + 2, 1, 1); g.fillRect(cx + 2, cy + 2, 1, 1);
     }
   }
 
