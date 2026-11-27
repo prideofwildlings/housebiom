@@ -111,10 +111,10 @@ function draw(now) {
     }
   }
 
-  /* a single scull far out on the lake, rowed at an easy, relaxed pace. It travels one way, bow first (to the right).
+  /* a single scull far out on the lake, rowed at an easy UT2 pace (20 strokes a minute). It travels one way, bow first (to the right).
      The rower always faces the stern; only his body slides along the seat. Drive is short, recovery long and slow. */
   {
-    const T = 3.4, cyc = 150, ph = still ? .35 : (t % cyc) / cyc;
+    const RATE = 20, T = 60 / RATE, cyc = 150,   /* UT2 pace: 20 strokes per minute */ ph = still ? .35 : (t % cyc) / cyc;
     const x0 = LAKE.x0 + 10, x1 = LAKE.x1 - 10;
     const sp = still ? .6 : (t % T) / T;
     const drive = sp < .33, k1 = drive ? sp / .33 : 1 - (sp - .33) / .67;            /* 0 at the catch, 1 at the finish */
