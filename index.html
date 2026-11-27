@@ -358,13 +358,8 @@ function draw(now) {
       if (l.len) g.fillRect(kx - 22 - Math.floor(l.t * 30), l.y, l.len, 1);
     }
   }
-  if (!still && t > cheerAt) { cheerUntil = t + 1.1; cheerAt = t + 14 + Math.random() * 8; sound.sparkle(); }
-  const frame = still ? 0 : t < cheerUntil ? 3 : Math.floor(t * 4.5) % 2;
+  const frame = still ? 0 : Math.floor(t * 4.5) % 2;
   if (kid.naturalWidth) g.drawImage(kid, frame * FRAME_W, 0, FRAME_W, FRAME_H, kx - ANCHOR_X, ky - ANCHOR_Y, FRAME_W, FRAME_H);
-  if (frame === 3) {
-    g.fillStyle = '#ffe9a8';
-    for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2 + t * 3, r = 13 + (i % 2) * 4; g.fillRect(kx + Math.round(Math.cos(a) * r), ky - 16 + Math.round(Math.sin(a) * r * .7), 1 + (i % 2), 1 + (i % 2)); }
-  }
   if (!still) requestAnimationFrame(draw);
 }
 if (still) { let n = 0; const once = () => { if (++n === 2) requestAnimationFrame(draw); }; bg.addEventListener('load', once); kid.addEventListener('load', once); }
