@@ -19,10 +19,6 @@ canvas{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);image-r
 .sound{position:absolute;right:14px;top:12px;z-index:3;width:48px;height:48px;padding:0;background:#2a0a12;border:3px solid #fff3dc;box-shadow:2px 2px 0 #120306;cursor:pointer;display:grid;place-items:center}
 .sound:focus-visible{outline:3px solid #8ff0c8;outline-offset:2px}
 .sound .w{opacity:0}.sound[aria-pressed=true] .w{opacity:1}.sound[aria-pressed=true] .x{opacity:0}
-.label{position:absolute;z-index:2;transform:translate(-50%,-100%);font:14px/1.2 Silkscreen,monospace;color:#2a120a;background:#fff3dc;border:3px solid #2a120a;box-shadow:3px 3px 0 #120306;padding:4px 8px;white-space:nowrap;pointer-events:none}
-.label.gut{background:#ffd9cf}
-.label.sealed{opacity:0;transition:opacity .2s}
-.label.sealed.on{opacity:1}
 .help{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);z-index:2;font:14px/1.4 Silkscreen,monospace;color:#fff3dc;background:#2a0a12;border:3px solid #fff3dc;padding:6px 10px;text-align:center;pointer-events:none;transition:opacity 1s;max-width:calc(100vw - 24px)}
 .veil{position:fixed;inset:0;z-index:20;pointer-events:none;opacity:0;background:radial-gradient(circle at var(--x,50%) var(--y,50%),#ffb3a6 0,#c0283c 30%,#3a0610 70%);transition:opacity .45s ease-in}
 .veil.on{opacity:1}
@@ -33,8 +29,6 @@ canvas{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);image-r
 </head>
 <body>
 <button type="button" class="sound" id="soundBtn" aria-pressed="false" aria-label="Sound"><svg viewBox="0 0 16 16" width="32" height="32" shape-rendering="crispEdges" aria-hidden="true"><rect x="2" y="6" width="3" height="4" fill="#fff3dc"/><rect x="5" y="5" width="1" height="6" fill="#fff3dc"/><rect x="6" y="4" width="1" height="8" fill="#fff3dc"/><rect x="7" y="3" width="1" height="10" fill="#fff3dc"/><g class="w" fill="#8ff0c8"><rect x="10" y="6" width="1" height="4"/><rect x="12" y="4" width="1" height="8"/><rect x="11" y="5" width="1" height="1"/><rect x="11" y="10" width="1" height="1"/></g><g class="x" fill="#ff8a8a"><rect x="10" y="6" width="1" height="1"/><rect x="11" y="7" width="1" height="1"/><rect x="12" y="8" width="1" height="1"/><rect x="13" y="9" width="1" height="1"/><rect x="13" y="6" width="1" height="1"/><rect x="12" y="7" width="1" height="1"/><rect x="11" y="8" width="1" height="1"/><rect x="10" y="9" width="1" height="1"/></g></svg></button>
-<div class="label gut" id="gutLabel">The Gut</div>
-<div class="label sealed" id="sealLabel">Sealed</div>
 <div class="help" id="help">Fly into the glowing portal, or tap it</div>
 <div class="veil" id="veil"></div>
 <canvas id="c" role="img" aria-label="A stone hub chamber with five portal doors. The middle portal swirls open and leads to the Gut world; the other four are sealed. Use the arrow keys or drag to fly the winged hero, and fly into the open portal or tap it to enter."></canvas>
@@ -108,7 +102,9 @@ function drawPortal(t) {
 
 /* hero: steer with keys or drag; wanders when left alone */
 let px = null, py = null, goal = null, lastInput = -99, face = 1, pose = 0, poseUntil = 0, nextPoseAt = 8, wander = null, wanderAt = 0, speed = 0;
-let entering = null;
+let entering = null, inside = 0, pulling = false;
+const PULL_R = 56;
+const pullParts = Array.from({length: 14}, () => ({a: Math.random() * 6.28, r: 1, life: Math.random()}));
 const keys = new Set();
 const toNative = e => { const r = cv.getBoundingClientRect(); return {x: (e.clientX - r.left) / k, y: (e.clientY - r.top) / k}; };
 const inPortal = (x, y) => x > wx(PORTAL.x0) && x < wx(PORTAL.x1) && y > wy(PORTAL.y0 + 6) && y < wy(PORTAL.y1);
@@ -133,10 +129,7 @@ addEventListener('blur', () => keys.clear());
 setTimeout(() => document.getElementById('help').style.opacity = 0, 7000);
 
 /* labels over the doors */
-const gutLabel = document.getElementById('gutLabel'), sealLabel = document.getElementById('sealLabel');
-let sealT = 0;
-function placeLabel(el, x, y) { const r = cv.getBoundingClientRect(); el.style.left = (r.left + x * k) + 'px'; el.style.top = (r.top + y * k) + 'px'; }
-function showSealed(sx) { placeLabel(sealLabel, wx(sx), wy(32)); sealLabel.classList.add('on'); clearTimeout(sealT); sealT = setTimeout(() => sealLabel.classList.remove('on'), 1400); }
+function showSealed() {}
 
 /* entering the portal */
 const veil = document.getElementById('veil');
@@ -209,8 +202,13 @@ function draw(now) {
       if (d > 2) { const st = Math.min(d, Math.min(22, d * .9) * dt); px += dx / d * st; py += dy / d * st; }
     }
     px = Math.max(minX, Math.min(maxX, px)); py = Math.max(minY, Math.min(maxY, py));
-    const steering = !!(vx || vy || goal);
-    if (steering && inPortal(px, py)) enter(t);
+    const steering = !!(vx || vy || (goal && !goal.portal));
+    /* the portal pulls you when you're near and in control; keep flying to slip past */
+    const cx = wx(PORTAL.cx), cy = wy(72), pdx = cx - px, pdy = cy - py, pd = Math.hypot(pdx, pdy);
+    pulling = (t - lastInput < 3 || (goal && goal.portal)) && pd < PULL_R;
+    if (pulling && pd > .5) { const st = Math.min(pd, (12 + 36 * (1 - pd / PULL_R)) * dt); px += pdx / pd * st; py += pdy / pd * st; }
+    if (pulling && pd < 7) inside += dt; else inside = 0;
+    if ((goal && goal.portal && pd < 7) || inside > (steering ? .9 : .3)) enter(t);
   }
   const vxNow = dt ? (px - ox) / dt : 0;
   speed = speed * .85 + (dt ? Math.hypot(px - ox, py - oy) / dt : 0) * .15;
@@ -226,6 +224,17 @@ function draw(now) {
       if (l.len && face > 0) g.fillRect(kx - 28 - Math.floor(l.t * 30), l.y, l.len, 1);
       if (l.len && face < 0) g.fillRect(kx + 24 + Math.floor(l.t * 30), l.y, l.len, 1);
     }
+  }
+  if (pulling && !entering && !still) {
+    const cx = wx(PORTAL.cx), cy = wy(72), pd = Math.hypot(cx - px, cy - py), pw = 1 - pd / PULL_R;
+    for (const q of pullParts) {
+      q.life += dt * (1.2 + pw * 2);
+      if (q.life > 1) { q.life = 0; q.a = Math.random() * 6.28; q.r = 18 + Math.random() * 26; }
+      const rr = q.r * (1 - q.life), ang = q.a + q.life * 3;
+      g.fillStyle = q.life < .5 ? 'rgba(255,190,170,.8)' : 'rgba(140,240,210,.8)';
+      g.fillRect(Math.round(cx + Math.cos(ang) * rr), Math.round(cy + Math.sin(ang) * rr * .9), 1, 1);
+    }
+    scale = 1 - Math.max(0, pw - .4) * .35;
   }
   let frame = 0;
   if (!still) {
@@ -243,7 +252,6 @@ function draw(now) {
     g.restore();
   }
 
-  placeLabel(gutLabel, wx(PORTAL.cx), wy(30) + (still ? 0 : Math.round(Math.sin(t * 1.8))));
   if (!still || !lastT) requestAnimationFrame(draw);
 }
 requestAnimationFrame(draw);
