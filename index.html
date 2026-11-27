@@ -33,6 +33,7 @@ canvas{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);image-r
 <div class="veil" id="veil"></div>
 <canvas id="c" role="img" aria-label="A stone hub chamber with five portal doors. The middle portal swirls red and leads to the Gut world; the second portal swirls turquoise and leads to the Training world; the other three are sealed. Use the arrow keys or drag to fly the winged hero, and fly into the open portal or tap it to enter."></canvas>
 <script src="assets/sound.js"></script>
+<script src="assets/hub-sound.js"></script>
 <script>
 {
 const cv = document.getElementById('c'), g = cv.getContext('2d');
@@ -126,6 +127,7 @@ function drawPortal(P, t) {
 
 /* hero: steer with keys or drag; wanders when left alone */
 let px = null, py = null, goal = null, lastInput = -99, face = 1, pose = 0, poseUntil = 0, nextPoseAt = 8, wander = null, wanderAt = 0, speed = 0;
+let prevWing = 0, lastHumT = -1;
 let entering = null, inside = 0, pulling = false, near = PORTALS[0], noPullUntil = 0;
 const PULL_R = 56;
 const pullParts = Array.from({length: 14}, () => ({a: Math.random() * 6.28, r: 1, life: Math.random()}));
@@ -276,6 +278,13 @@ function draw(now) {
       if (t > nextPoseAt) { pose = Math.random() < .55 ? 2 : 3; poseUntil = t + 2.4; nextPoseAt = t + 9 + Math.random() * 7; }
       frame = t < poseUntil ? pose : ((t * .8) % 1 < .28 ? 1 : 0);
     }
+  }
+  /* sound: a wingbeat each time the wings come down, and the portal hum by distance */
+  if (window.HBHub) {
+    if (frame === 1 && prevWing !== 1 && !entering) HBHub.flap(moving ? .2 : .07, kx / W * 2 - 1);
+    prevWing = frame;
+    const dP = Math.hypot(wx(near.cx) - px, wy(near.ey) - py);
+    if (t - lastHumT > .25) { lastHumT = t; HBHub.portal(entering ? 1 : 1 - dP / 90, wx(near.cx) / W * 2 - 1); }
   }
   if (hero.naturalWidth) {
     g.save(); g.globalAlpha = alpha;
