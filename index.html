@@ -18,6 +18,19 @@ html,body{height:100%;background:#4a0f1a;overflow:hidden}
 .tag{position:absolute;z-index:2;transform:translate(-50%,-100%);font:16px/1.2 Silkscreen,monospace;color:#fff3dc;background:#2a0a12;border:3px solid #fff3dc;box-shadow:3px 3px 0 #120306;padding:6px 10px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .2s}
 .tag.on{opacity:1}
 .hud{position:absolute;left:14px;top:12px;z-index:2;font:14px Silkscreen,monospace;color:#fff3dc;text-shadow:2px 2px 0 #120306;pointer-events:none;display:flex;flex-direction:column;gap:6px}
+.hud button{pointer-events:auto;font:inherit;font-size:15px;color:#fff3dc;background:#2a0a12;border:3px solid #fff3dc;box-shadow:2px 2px 0 #120306;padding:5px 10px;cursor:pointer;display:flex;align-items:center;gap:8px;min-height:40px;align-self:flex-start}
+.hud button b{color:#ffe17a;font-weight:normal}
+.hud button:focus-visible{outline:3px solid #8ff0c8;outline-offset:2px}
+.menu{pointer-events:auto;background:#2a0a12;border:3px solid #fff3dc;box-shadow:3px 3px 0 #120306;padding:6px 10px;max-height:min(320px,55vh);overflow:auto;min-width:220px}
+.menu[hidden]{display:none}
+.menu ul{list-style:none;margin:0;padding:0}
+.menu li{display:flex;align-items:center;gap:10px;padding:4px 0;border-bottom:2px dashed rgba(255,243,220,.2)}
+.menu li:last-child{border-bottom:0}
+.menu li img{width:32px;height:32px;image-rendering:pixelated}
+.menu li span{flex:1}
+.menu li b{color:#ffe17a;font-weight:normal}
+.menu .bad span,.menu .bad b{color:#ff9a9a}
+.menu .empty{opacity:.7;padding:6px 0}
 .bar{width:150px;height:14px;border:3px solid #fff3dc;background:#2a0a12;box-shadow:2px 2px 0 #120306}
 .bar b{display:block;height:100%;width:50%;background:repeating-linear-gradient(90deg,#8ff0a0 0 10px,#5cc878 10px 12px);transition:width .3s}
 .bar.low b{background:repeating-linear-gradient(90deg,#ff9a6a 0 10px,#d0603a 10px 12px)}
@@ -27,7 +40,7 @@ canvas{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);image-r
 </head>
 <body>
 <div class="tag" id="tag"></div>
-<div class="hud" aria-live="polite"><span>Microbiome</span><div class="bar" id="bar"><b id="barFill"></b></div><span id="blocked">Blocked 0</span></div>
+<div class="hud"><button type="button" id="stomachBtn" aria-expanded="false" aria-controls="menu">In my stomach <b id="inCount">0</b> ▾</button><div class="menu" id="menu" hidden><ul id="menuList"></ul></div><span>Microbiome</span><div class="bar" id="bar"><b id="barFill"></b></div><span id="blocked">Blocked 0</span></div>
 <div class="help" id="help">Good food feeds your microbiome · Swing the net at toxic food before it gets in<br>Arrows or drag to fly · Space or tap to swing</div>
 <canvas id="c" role="img" aria-label="A boy with a net flying through a tunnel inside the gut. Good foods flow in to feed your microbiome. Use the arrow keys or drag to fly, and Space or tap to swing the net at toxic foods before they get in."></canvas>
 <script>
@@ -159,6 +172,30 @@ addEventListener('keyup', e => keys.delete(e.key.toLowerCase()));
 addEventListener('blur', () => keys.clear());
 setTimeout(() => document.getElementById('help').style.opacity = 0, 9000);
 let health = 50, blocked = 0, toxicFlash = -9, feedFlash = -9;
+const inCounts = {}, toxicIn = {}; let inTotal = 0;
+const btn = document.getElementById('stomachBtn'), menu = document.getElementById('menu'), menuList = document.getElementById('menuList');
+function renderMenu() {
+  const rows = FOODS.filter(f => !f.bad && inCounts[f.key]).sort((a, b) => inCounts[b.key] - inCounts[a.key]);
+  const badRows = FOODS.filter(f => f.bad && toxicIn[f.key]);
+  menuList.innerHTML = '';
+  if (!rows.length && !badRows.length) { menuList.innerHTML = '<li class="empty">Nothing yet. Watch the stream.</li>'; return; }
+  for (const [f, n, cls] of [...rows.map(f => [f, inCounts[f.key], '']), ...badRows.map(f => [f, toxicIn[f.key], 'bad'])]) {
+    const li = document.createElement('li'); if (cls) li.className = cls;
+    li.innerHTML = '<img alt=""><span></span><b></b>';
+    li.querySelector('img').src = f.img.src;
+    li.querySelector('span').textContent = cls ? f.name + ' (toxic)' : f.name;
+    li.querySelector('b').textContent = '×' + n;
+    menuList.appendChild(li);
+  }
+}
+function toggleMenu(open) {
+  const on = open ?? menu.hidden;
+  menu.hidden = !on; btn.setAttribute('aria-expanded', String(on));
+  if (on) renderMenu();
+}
+btn.addEventListener('click', () => toggleMenu());
+addEventListener('keydown', e => { if (e.key === 'Escape') toggleMenu(false); });
+cv.addEventListener('pointerdown', () => toggleMenu(false));
 const bar = document.getElementById('bar'), barFill = document.getElementById('barFill'), blockedEl = document.getElementById('blocked');
 function setHealth(v) { health = Math.max(0, Math.min(100, v)); barFill.style.width = health + '%'; bar.classList.toggle('low', health < 30); }
 setHealth(50);
@@ -192,8 +229,8 @@ function draw(now) {
     if (o.x < -20) {
       floats.splice(i, 1);
       const r = cv.getBoundingClientRect();
-      if (o.f.bad) { setHealth(health - 12); toxicFlash = t; showTag({name: o.f.name, bad: true, note: '☠ got in!'}, r.left + 90, r.top + (top + 86) * k); }
-      else { setHealth(health + 5); feedFlash = t; pops.push({x: 4, y: top + 94, t, bad: false}); }
+      if (o.f.bad) { toxicIn[o.f.key] = (toxicIn[o.f.key] || 0) + 1; if (!menu.hidden) renderMenu(); setHealth(health - 12); toxicFlash = t; showTag({name: o.f.name, bad: true, note: '☠ got in!'}, r.left + 90, r.top + (top + 86) * k); }
+      else { inCounts[o.f.key] = (inCounts[o.f.key] || 0) + 1; inTotal++; document.getElementById('inCount').textContent = inTotal; if (!menu.hidden) renderMenu(); setHealth(health + 5); feedFlash = t; pops.push({x: 4, y: top + 94, t, bad: false}); }
       continue;
     }
     const fb = still ? 0 : Math.round(Math.sin(t * 2 + o.ph));
