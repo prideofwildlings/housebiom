@@ -340,7 +340,7 @@ function draw(now) {
   drawBuoys(t);
 
   if (seat.naturalWidth) {
-    const sx = wx(72) - 9, sy = wy(126) - seat.naturalHeight + 2;
+    const sx = wx(72) - 17, sy = wy(126) - seat.naturalHeight + 3;
     g.fillStyle = 'rgba(30,20,30,.35)'; g.fillRect(sx + 3, sy + seat.naturalHeight - 3, seat.naturalWidth - 6, 2); g.fillRect(sx + 6, sy + seat.naturalHeight - 1, seat.naturalWidth - 12, 1);
     g.drawImage(seatShade || seat, sx, sy);
     /* the gold carving breathes: a slow, faint glow */
