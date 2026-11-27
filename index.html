@@ -7,63 +7,51 @@
 <link rel="artifact-thumbnail" href="thumb.jpg">
 <link href="https://fonts.googleapis.com/css2?family=Silkscreen&display=swap" rel="stylesheet">
 <style>
-/* VOICE: playful, retro, a little magical
-   IDEA: a Game Boy Advance era side-scroller set inside the gut
-   PICTURE: the whole screen is the game canvas, crisp pixels at an integer scale
-   COLOUR and TYPE: the art's own crimson and teal; no text for now
-   LAYOUT: full-bleed canvas, nothing else */
+/* VOICE: calm, cozy, retro
+   IDEA: a Game Boy Advance era scene inside the gut that you simply watch
+   PICTURE: the whole screen is the pixel canvas at an integer scale
+   COLOUR and TYPE: the art's crimson and teal; Silkscreen for the journal
+   LAYOUT: full-bleed canvas, one journal button top left */
 :root{color-scheme:dark}
 *{box-sizing:border-box;margin:0}
 html,body{height:100%;background:#4a0f1a;overflow:hidden}
-.tag{position:absolute;z-index:2;transform:translate(-50%,-100%);font:16px/1.2 Silkscreen,monospace;color:#fff3dc;background:#2a0a12;border:3px solid #fff3dc;box-shadow:3px 3px 0 #120306;padding:6px 10px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .2s}
-.tag.on{opacity:1}
-.hud{position:absolute;left:14px;top:12px;z-index:2;font:14px Silkscreen,monospace;color:#fff3dc;text-shadow:2px 2px 0 #120306;pointer-events:none;display:flex;flex-direction:column;gap:6px}
-.hud button{pointer-events:auto;font:inherit;font-size:15px;color:#fff3dc;background:#2a0a12;border:3px solid #fff3dc;box-shadow:2px 2px 0 #120306;padding:5px 10px;cursor:pointer;display:flex;align-items:center;gap:8px;min-height:40px;align-self:flex-start}
-.hud button b{color:#ffe17a;font-weight:normal}
-.hud button:focus-visible{outline:3px solid #8ff0c8;outline-offset:2px}
-.menu{pointer-events:auto;background:#2a0a12;border:3px solid #fff3dc;box-shadow:3px 3px 0 #120306;padding:6px 10px;max-height:min(320px,55vh);overflow:auto;min-width:220px}
-.menu[hidden]{display:none}
-.menu ul{list-style:none;margin:0;padding:0}
-.menu li{display:flex;align-items:center;gap:10px;padding:4px 0;border-bottom:2px dashed rgba(255,243,220,.2)}
-.menu li:last-child{border-bottom:0}
-.menu li img{width:32px;height:32px;image-rendering:pixelated}
-.menu li span{flex:1}
-.menu li b{color:#ffe17a;font-weight:normal}
-.menu .bad span,.menu .bad b{color:#ff9a9a}
-.menu .empty{opacity:.7;padding:6px 0}
-.bar{width:150px;height:14px;border:3px solid #fff3dc;background:#2a0a12;box-shadow:2px 2px 0 #120306}
-.bar b{display:block;height:100%;width:50%;background:repeating-linear-gradient(90deg,#8ff0a0 0 10px,#5cc878 10px 12px);transition:width .3s}
-.bar.low b{background:repeating-linear-gradient(90deg,#ff9a6a 0 10px,#d0603a 10px 12px)}
-.help{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);z-index:2;font:14px/1.4 Silkscreen,monospace;color:#fff3dc;background:#2a0a12;border:3px solid #fff3dc;padding:6px 10px;text-align:center;pointer-events:none;transition:opacity 1s;max-width:calc(100vw - 24px)}.tag i{font-style:normal;color:#8ff0c8}.tag.bad i{color:#ff8a8a}
-canvas{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);image-rendering:pixelated;image-rendering:crisp-edges;cursor:pointer;touch-action:manipulation}
+canvas{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);image-rendering:pixelated;image-rendering:crisp-edges}
+.journal{position:absolute;left:14px;top:12px;z-index:2;font:15px/1.3 Silkscreen,monospace;color:#fff3dc;display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.journal button{font:inherit;color:#fff3dc;background:#2a0a12;border:3px solid #fff3dc;box-shadow:2px 2px 0 #120306;padding:5px 10px;cursor:pointer;display:flex;align-items:center;gap:8px;min-height:40px}
+.journal button b{color:#ffe17a;font-weight:normal}
+.journal button:focus-visible{outline:3px solid #8ff0c8;outline-offset:2px}
+.page{background:#f3e6c8;color:#3a1a14;border:3px solid #fff3dc;box-shadow:3px 3px 0 #120306;padding:10px 12px;max-height:min(420px,70vh);overflow:auto;min-width:230px}
+.page[hidden]{display:none}
+.page h2{font:inherit;font-size:15px;color:#7a2030;margin-bottom:6px}
+.page ul{list-style:none;margin:0;padding:0}
+.page li{display:flex;align-items:center;gap:10px;padding:3px 0;border-bottom:2px dashed rgba(58,26,20,.18)}
+.page li:last-child{border-bottom:0}
+.page li img{width:32px;height:32px;image-rendering:pixelated}
+.page li span{flex:1}
+.page li i{font-style:normal;color:#3f8f5a}
 </style>
 </head>
 <body>
-<div class="tag" id="tag"></div>
-<div class="hud"><button type="button" id="stomachBtn" aria-expanded="false" aria-controls="menu">In my stomach <b id="inCount">0</b> ▾</button><div class="menu" id="menu" hidden><ul id="menuList"></ul></div><span>Microbiome</span><div class="bar" id="bar"><b id="barFill"></b></div><span id="blocked">Blocked 0</span></div>
-<div class="help" id="help">Good food feeds your microbiome · Swing the net at toxic food before it gets in<br>Arrows or drag to fly · Space or tap to swing</div>
-<canvas id="c" role="img" aria-label="A boy with a net flying through a tunnel inside the gut. Good foods flow in to feed your microbiome. Use the arrow keys or drag to fly, and Space or tap to swing the net at toxic foods before they get in."></canvas>
+<div class="journal">
+  <button type="button" id="journalBtn" aria-expanded="false" aria-controls="page">Journal <b id="count">0</b> foods ▾</button>
+  <div class="page" id="page" hidden><h2>Logged in successfully</h2><ul id="list"></ul></div>
+</div>
+<canvas id="c" role="img" aria-label="A boy with a net floats through a tunnel inside the gut while his safe foods drift by on the stream, glowing gold."></canvas>
 <script>
 {
 const cv = document.getElementById('c'), g = cv.getContext('2d');
 const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const BG_H = 145, TILE_W = 514, FRAME_W = 48, FRAME_H = 49, ANCHOR_X = 18, ANCHOR_Y = 29;
+const bg = new Image(), kid = new Image();
+bg.src = 'assets/px-bg.png'; kid.src = 'assets/px-kid.png';
+
+/* foods logged in successfully */
 const FOODS = [
   ['chicken','Chicken'],['rice','Rice'],['spinach','Spinach'],['carrot','Carrot'],['banana','Banana'],['eggs','Eggs'],['olive-oil','Olive oil'],
-  ['kiwi','Kiwi'],['watermelon','Watermelon'],['rice-cake','Rice cake'],['potato','Potato'],['peanut-butter','Peanut butter'],['pecan','Pecan'],['pumpkin-seed','Pumpkin seed'],
-  ['oat','Oat',1],['pear','Pear',1],['sweet-potato','Sweet potato',1]
-].map(([key, name, bad]) => { const img = new Image(); img.src = `assets/food/${key}.png`; return {key, name, bad: !!bad, img, dark: null}; });
-function darken(f) {
-  const c = document.createElement('canvas'); c.width = c.height = 16;
-  const x = c.getContext('2d'); x.drawImage(f.img, 0, 0);
-  try {
-    const d = x.getImageData(0, 0, 16, 16);
-    for (let i = 0; i < d.data.length; i += 4) { const v = (d.data[i] + d.data[i+1] + d.data[i+2]) / 3; d.data[i] = v * .55 + 30; d.data[i+1] = v * .45; d.data[i+2] = v * .5 + 10; }
-    x.putImageData(d, 0, 0);
-  } catch (e) {}
-  f.dark = c;
-}
-/* auras: pixel rings that follow each icon's silhouette */
+  ['kiwi','Kiwi'],['watermelon','Watermelon'],['rice-cake','Rice cake'],['potato','Potato'],['peanut-butter','Peanut butter'],['pecan','Pecan'],['pumpkin-seed','Pumpkin seed']
+].map(([key, name]) => { const img = new Image(); img.src = `assets/food/${key}.png`; return {key, name, img, aura: null}; });
+
+/* golden aura: pixel rings that follow each icon's silhouette */
 function makeAura(f) {
   const P = 3, S = 16 + P * 2;
   const c = document.createElement('canvas'); c.width = c.height = 16;
@@ -74,7 +62,7 @@ function makeAura(f) {
   for (let y = 0; y < 16; y++) for (let xx = 0; xx < 16; xx++) if (a[(y * 16 + xx) * 4 + 3] > 40) m[(y + P) * S + xx + P] = 1;
   const grow = src => { const o = src.slice(); for (let y = 1; y < S - 1; y++) for (let xx = 1; xx < S - 1; xx++) if (!src[y * S + xx] && (src[y * S + xx - 1] || src[y * S + xx + 1] || src[(y - 1) * S + xx] || src[(y + 1) * S + xx])) o[y * S + xx] = 1; return o; };
   const d1 = grow(m), d2 = grow(d1), d3 = grow(d2);
-  const cols = f.bad ? [[141,255,58,230],[164,60,255,150],[90,220,40,70]] : [[255,246,192,230],[255,216,106,140],[255,190,80,55]];
+  const cols = [[255,246,192,230],[255,216,106,140],[255,190,80,55]];
   f.aura = [0, 1].map(phase => {
     const k2 = document.createElement('canvas'); k2.width = k2.height = S;
     const g2 = k2.getContext('2d'), im = g2.createImageData(S, S);
@@ -84,26 +72,30 @@ function makeAura(f) {
       if (d1[i] && !m[i]) col = cols[0];
       else if (d2[i] && !d1[i]) col = cols[1];
       else if (d3[i] && !d2[i] && (xx + y + phase) % 2 === 0) col = cols[2];
-      if (f.bad && col && col !== cols[0] && (xx * 7 + y * 3 + phase) % 3 === 0) col = null;
       if (col) im.data.set(col, i * 4);
     }
     g2.putImageData(im, 0, 0);
     return k2;
   });
 }
-FOODS.forEach(f => { f.img.onload = () => { makeAura(f); if (f.bad) darken(f); }; });
-const good = FOODS.filter(f => !f.bad), bad = FOODS.filter(f => f.bad);
-let bag = [];
-function nextFood() {
-  if (Math.random() < .3) return bad[Math.floor(Math.random() * bad.length)];
-  if (!bag.length) bag = good.slice().sort(() => Math.random() - .5);
-  return bag.pop();
-}
-const floats = [];
-let spawnAt = 0;
-const bg = new Image(), kid = new Image();
-bg.src = 'assets/px-bg.png'; kid.src = 'assets/px-kid.png';
+FOODS.forEach(f => { f.img.onload = () => makeAura(f); });
 
+/* journal */
+const btn = document.getElementById('journalBtn'), page = document.getElementById('page'), list = document.getElementById('list');
+document.getElementById('count').textContent = FOODS.length;
+for (const f of FOODS) {
+  const li = document.createElement('li');
+  li.innerHTML = '<img alt=""><span></span><i>✓</i>';
+  li.querySelector('img').src = f.img.src;
+  li.querySelector('span').textContent = f.name;
+  list.appendChild(li);
+}
+function toggle(open) { const on = open ?? page.hidden; page.hidden = !on; btn.setAttribute('aria-expanded', String(on)); }
+btn.addEventListener('click', () => toggle());
+addEventListener('keydown', e => { if (e.key === 'Escape') toggle(false); });
+cv.addEventListener('pointerdown', () => toggle(false));
+
+/* canvas sizing at an integer pixel scale */
 let W = 0, H = 0, k = 1, top = 0, topCol = '#4a0f1a', botCol = '#4a0f1a';
 function fit() {
   const vw = innerWidth, vh = innerHeight;
@@ -115,223 +107,82 @@ function fit() {
   g.imageSmoothingEnabled = false;
 }
 addEventListener('resize', fit); fit();
-
-function edgeColours() {
+bg.onload = () => {
   const t = document.createElement('canvas'); t.width = 1; t.height = BG_H;
   const c = t.getContext('2d'); c.drawImage(bg, 0, 0, 1, BG_H, 0, 0, 1, BG_H);
-  const px = y => { const d = c.getImageData(0, y, 1, 1).data; return `rgb(${d[0]},${d[1]},${d[2]})`; };
-  topCol = px(0); botCol = px(BG_H - 1);
-  document.body.style.background = topCol;
-}
-bg.onload = edgeColours;
+  try {
+    const px = y => { const d = c.getImageData(0, y, 1, 1).data; return `rgb(${d[0]},${d[1]},${d[2]})`; };
+    topCol = px(0); botCol = px(BG_H - 1); document.body.style.background = topCol;
+  } catch (e) {}
+};
 
-/* bubbles rising from the stream */
 const bubbles = Array.from({length: 10}, () => ({x: Math.random() * TILE_W, life: Math.random()}));
-/* speed lines behind the boy */
-const lines = Array.from({length: 4}, (_, i) => ({y: 0, x: 0, len: 0, t: i / 4}));
+const lines = Array.from({length: 4}, (_, i) => ({y: 0, len: 0, t: i / 4}));
+const floats = [];
+let bag = [], spawnAt = 0, cheerAt = 9, cheerUntil = 0;
+const nextFood = () => { if (!bag.length) bag = FOODS.slice().sort(() => Math.random() - .5); return bag.pop(); };
 
-let action = null, actionUntil = 0, nextCheer = 9000;
-function swing(now) { action = 2; actionUntil = now + 380; }
-const tag = document.getElementById('tag'); let tagT;
-function showTag(f, px, py) {
-  tag.className = 'tag' + (f.bad ? ' bad' : '');
-  tag.innerHTML = '<span></span> <i></i>';
-  tag.firstChild.textContent = f.name;
-  tag.lastChild.textContent = f.note || (f.bad ? '✗ toxic' : '✓ safe');
-  const hw = tag.offsetWidth / 2 + 8; tag.style.left = Math.max(hw, Math.min(innerWidth - hw, px)) + 'px';
-  tag.style.top = Math.max(50, py - 12) + 'px';
-  tag.classList.add('on'); clearTimeout(tagT); tagT = setTimeout(() => tag.classList.remove('on'), 2200);
-}
-/* player position (native pixels) and controls */
-let px = null, py = null, goal = null, drag = null;
-const keys = new Set();
-const toNative = e => { const r = cv.getBoundingClientRect(); return {x: (e.clientX - r.left) / k, y: (e.clientY - r.top) / k, r}; };
-cv.addEventListener('pointerdown', e => {
-  cv.setPointerCapture(e.pointerId);
-  const n = toNative(e);
-  drag = {x0: e.clientX, y0: e.clientY, t0: performance.now(), moved: false};
-  goal = {x: n.x, y: n.y};
-});
-cv.addEventListener('pointermove', e => {
-  if (!drag) return;
-  if (Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) > 12) drag.moved = true;
-  const n = toNative(e); goal = {x: n.x, y: n.y};
-});
-cv.addEventListener('pointerup', e => {
-  if (drag && !drag.moved && performance.now() - drag.t0 < 300) {
-    goal = null;
-    const n = toNative(e);
-    const hit = floats.find(f => n.x > f.x - 3 && n.x < f.x + 19 && n.y > top + 82 && n.y < top + 106);
-    if (hit) showTag(hit.f, n.r.left + (hit.x + 8) * k, n.r.top + (top + 86) * k);
-    else swing(performance.now());
-  }
-  drag = null; goal = null;
-});
-addEventListener('keydown', e => { const kk = e.key.toLowerCase(); if (['arrowup','arrowdown','arrowleft','arrowright','w','a','s','d'].includes(kk)) { keys.add(kk); e.preventDefault(); } });
-addEventListener('keyup', e => keys.delete(e.key.toLowerCase()));
-addEventListener('blur', () => keys.clear());
-setTimeout(() => document.getElementById('help').style.opacity = 0, 9000);
-let health = 50, blocked = 0, toxicFlash = -9, feedFlash = -9;
-const inCounts = {}, toxicIn = {}; let inTotal = 0;
-const btn = document.getElementById('stomachBtn'), menu = document.getElementById('menu'), menuList = document.getElementById('menuList');
-function renderMenu() {
-  const rows = FOODS.filter(f => !f.bad && inCounts[f.key]).sort((a, b) => inCounts[b.key] - inCounts[a.key]);
-  const badRows = FOODS.filter(f => f.bad && toxicIn[f.key]);
-  menuList.innerHTML = '';
-  if (!rows.length && !badRows.length) { menuList.innerHTML = '<li class="empty">Nothing yet. Watch the stream.</li>'; return; }
-  for (const [f, n, cls] of [...rows.map(f => [f, inCounts[f.key], '']), ...badRows.map(f => [f, toxicIn[f.key], 'bad'])]) {
-    const li = document.createElement('li'); if (cls) li.className = cls;
-    li.innerHTML = '<img alt=""><span></span><b></b>';
-    li.querySelector('img').src = f.img.src;
-    li.querySelector('span').textContent = cls ? f.name + ' (toxic)' : f.name;
-    li.querySelector('b').textContent = '×' + n;
-    menuList.appendChild(li);
-  }
-}
-function toggleMenu(open) {
-  const on = open ?? menu.hidden;
-  menu.hidden = !on; btn.setAttribute('aria-expanded', String(on));
-  if (on) renderMenu();
-}
-btn.addEventListener('click', () => toggleMenu());
-addEventListener('keydown', e => { if (e.key === 'Escape') toggleMenu(false); });
-cv.addEventListener('pointerdown', () => toggleMenu(false));
-const bar = document.getElementById('bar'), barFill = document.getElementById('barFill'), blockedEl = document.getElementById('blocked');
-function setHealth(v) { health = Math.max(0, Math.min(100, v)); barFill.style.width = health + '%'; bar.classList.toggle('low', health < 30); }
-setHealth(50);
-const pops = [];
-addEventListener('keydown', e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); swing(performance.now()); } });
-
-let start = performance.now(), lastT = 0;
+const start = performance.now(); let lastT = 0;
 function draw(now) {
   const t = (now - start) / 1000, dt = Math.min(.05, t - lastT); lastT = t;
   g.fillStyle = topCol; g.fillRect(0, 0, W, top + 1);
   g.fillStyle = botCol; g.fillRect(0, top + BG_H - 1, W, H - top - BG_H + 1);
   const scroll = still ? 0 : Math.floor(t * 14) % TILE_W;
-  if (bg.complete && bg.naturalWidth) for (let x = -scroll; x < W; x += TILE_W) g.drawImage(bg, x, top);
+  if (bg.naturalWidth) for (let x = -scroll; x < W; x += TILE_W) g.drawImage(bg, x, top);
 
   if (!still) {
     g.fillStyle = '#9ff0d0';
     for (const b of bubbles) {
-      b.life += 0.008;
+      b.life += dt * .5;
       if (b.life > 1) { b.life = 0; b.x = Math.random() * TILE_W; }
       const sx = ((b.x - t * 14) % TILE_W + TILE_W) % TILE_W;
-      const y = top + 96 - Math.floor(b.life * 14);
-      if (b.life < .85) for (let x = sx; x < W; x += TILE_W) g.fillRect(Math.floor(x), y, 1, 1);
+      if (b.life < .85) for (let x = sx; x < W; x += TILE_W) g.fillRect(Math.floor(x), top + 96 - Math.floor(b.life * 14), 1, 1);
     }
   }
 
-  if (!still && t > spawnAt) { floats.push({f: nextFood(), x: W + 4, ph: Math.random() * 6}); spawnAt = t + 2 + Math.random() * 1.8; }
-  if (still && !floats.length) for (let i = 0; i < 6; i++) floats.push({f: good[i * 2], x: 12 + i * Math.floor(W / 6), ph: i});
+  /* foods floating on the stream */
+  if (!still && t > spawnAt) { floats.push({f: nextFood(), x: W + 4, ph: Math.random() * 6}); spawnAt = t + 2.2 + Math.random() * 1.8; }
+  if (still && !floats.length) FOODS.slice(0, 6).forEach((f, i) => floats.push({f, x: 12 + i * Math.floor(W / 6), ph: i}));
   for (let i = floats.length - 1; i >= 0; i--) {
     const o = floats[i];
-    if (!still) o.x -= dt * 20;
-    if (o.x < -20) {
-      floats.splice(i, 1);
-      const r = cv.getBoundingClientRect();
-      if (o.f.bad) { toxicIn[o.f.key] = (toxicIn[o.f.key] || 0) + 1; if (!menu.hidden) renderMenu(); setHealth(health - 12); toxicFlash = t; showTag({name: o.f.name, bad: true, note: '☠ got in!'}, r.left + 90, r.top + (top + 86) * k); }
-      else { inCounts[o.f.key] = (inCounts[o.f.key] || 0) + 1; inTotal++; document.getElementById('inCount').textContent = inTotal; if (!menu.hidden) renderMenu(); setHealth(health + 5); feedFlash = t; pops.push({x: 4, y: top + 94, t, bad: false}); }
-      continue;
-    }
-    const fb = still ? 0 : Math.round(Math.sin(t * 2 + o.ph));
-    const fx = Math.round(o.x), wl = top + 101 + fb;
-    const src = o.f.bad && o.f.dark ? o.f.dark : o.f.img;
+    if (!still) o.x -= dt * 18;
+    if (o.x < -24) { floats.splice(i, 1); continue; }
+    const fx = Math.round(o.x), wl = top + 101 + (still ? 0 : Math.round(Math.sin(t * 2 + o.ph)));
     if (o.f.aura) {
-      const pulse = still ? .8 : o.f.bad ? .7 + .3 * Math.sin(t * 9 + o.ph) * Math.sin(t * 3.1) : .55 + .45 * Math.sin(t * 3 + o.ph);
-      g.globalAlpha = Math.max(.15, pulse);
-      g.drawImage(o.f.aura[still ? 0 : Math.floor(t * (o.f.bad ? 7 : 3)) % 2], 0, 0, 22, 16, fx - 3, wl - 16, 22, 16);
+      g.globalAlpha = still ? .8 : Math.max(.15, .55 + .45 * Math.sin(t * 3 + o.ph));
+      g.drawImage(o.f.aura[still ? 0 : Math.floor(t * 3) % 2], 0, 0, 22, 16, fx - 3, wl - 16, 22, 16);
       g.globalAlpha = 1;
     }
-    if (src.width || src.naturalWidth) g.drawImage(src, 0, 0, 16, 13, fx, wl - 13, 16, 13);
+    if (o.f.img.naturalWidth) g.drawImage(o.f.img, 0, 0, 16, 13, fx, wl - 13, 16, 13);
+    g.fillStyle = 'rgba(190,255,230,.75)'; g.fillRect(fx + 1, wl, 4, 1); g.fillRect(fx + 9, wl, 5, 1);
     if (!still) {
-      if (o.f.bad) {
-        for (let j = 0; j < 3; j++) {
-          const life = ((t * .9 + o.ph + j / 3) % 1);
-          const bx = fx + 3 + ((j * 5 + Math.floor(o.ph * 7)) % 11) + Math.round(Math.sin(t * 4 + j) * 1);
-          const by = wl - 14 - Math.floor(life * 12);
-          g.fillStyle = j % 2 ? '#a43cff' : '#8dff3a';
-          if (life < .8) g.fillRect(bx, by, life > .55 ? 2 : 1, life > .55 ? 2 : 1);
-        }
-      } else {
-        const tw = (t * 1.6 + o.ph) % 1, sx = fx + ((Math.floor(t * 1.6 + o.ph) * 7) % 18) - 1, sy = wl - 15 + ((Math.floor(t * 1.6 + o.ph) * 5) % 7);
-        if (tw < .5) { g.fillStyle = '#fffbe0'; g.fillRect(sx, sy, 1, 1); if (tw > .15 && tw < .35) { g.fillRect(sx - 1, sy, 3, 1); g.fillRect(sx, sy - 1, 1, 3); } }
-      }
-    }
-    g.fillStyle = 'rgba(190,255,230,.75)';
-    g.fillRect(fx + 1, wl, 4, 1); g.fillRect(fx + 9, wl, 5, 1);
-  }
-
-  if (px === null) { px = Math.floor(W * .4); py = top + 72; }
-  let vx = 0, vy = 0;
-  if (keys.has('arrowleft') || keys.has('a')) vx -= 1;
-  if (keys.has('arrowright') || keys.has('d')) vx += 1;
-  if (keys.has('arrowup') || keys.has('w')) vy -= 1;
-  if (keys.has('arrowdown') || keys.has('s')) vy += 1;
-  if (vx || vy) { const m = Math.hypot(vx, vy); px += vx / m * 70 * dt; py += vy / m * 70 * dt; }
-  else if (goal) { const gx = goal.x - 6, gy = goal.y, d = Math.hypot(gx - px, gy - py); if (d > 1) { const st = Math.min(d, 80 * dt); px += (gx - px) / d * st; py += (gy - py) / d * st; } }
-  px = Math.max(20, Math.min(W - 32, px)); py = Math.max(top + 36, Math.min(top + 92, py));
-  const bob = still ? 0 : Math.round(Math.sin(t * 2.2) * ((vx || vy || goal) ? 1 : 2));
-  const kx = Math.round(px), ky = Math.round(py) + bob;
-
-  /* catching with the net */
-  if (action === 2 && now < actionUntil) {
-    const nx0 = kx + 14, nx1 = kx + 30, ny0 = ky - 8, ny1 = ky + 10;
-    for (let i = floats.length - 1; i >= 0; i--) {
-      const o = floats[i], fy0 = top + 88, fy1 = top + 101;
-      if (o.f.bad && o.x + 14 > nx0 && o.x + 2 < nx1 && fy1 > ny0 && fy0 < ny1) {
-        floats.splice(i, 1);
-        const r = cv.getBoundingClientRect();
-        blocked++; blockedEl.textContent = 'Blocked ' + blocked;
-        showTag({name: o.f.name, bad: true, note: '✗ blocked!'}, r.left + (o.x + 8) * k, r.top + (top + 86) * k);
-        pops.push({x: o.x + 8, y: top + 94, t, bad: true});
-      }
+      const n = Math.floor(t * 1.6 + o.ph), tw = (t * 1.6 + o.ph) % 1, sx = fx + (n * 7) % 18 - 1, sy = wl - 15 + (n * 5) % 7;
+      if (tw < .5) { g.fillStyle = '#fffbe0'; g.fillRect(sx, sy, 1, 1); if (tw > .15 && tw < .35) { g.fillRect(sx - 1, sy, 3, 1); g.fillRect(sx, sy - 1, 1, 3); } }
     }
   }
-  for (let i = pops.length - 1; i >= 0; i--) {
-    const p = pops[i], a = t - p.t;
-    if (a > .6) { pops.splice(i, 1); continue; }
-    g.fillStyle = p.bad ? '#ff6a6a' : '#fff2a8';
-    for (let j = 0; j < 8; j++) { const an = j / 8 * Math.PI * 2, rr = 3 + a * 22; g.fillRect(Math.round(p.x + Math.cos(an) * rr), Math.round(p.y + Math.sin(an) * rr * .7), 1, 1); }
-  }
 
+  /* the boy drifts on his own */
+  const kx = Math.round(W * .4 + (still ? 0 : Math.sin(t * .23) * W * .08));
+  const ky = top + 66 + (still ? 0 : Math.round(Math.sin(t * .41) * 7 + Math.sin(t * 2.2) * 1.5));
   if (!still) {
     g.fillStyle = 'rgba(255,235,210,.55)';
     for (const l of lines) {
-      l.t += 0.02;
+      l.t += dt * 1.2;
       if (l.t > 1) { l.t = 0; l.y = ky - 10 + Math.floor(Math.random() * 20); l.len = 4 + Math.floor(Math.random() * 7); }
-      const x = kx - 22 - Math.floor(l.t * 30);
-      if (l.len) g.fillRect(x, l.y, l.len, 1);
+      if (l.len) g.fillRect(kx - 22 - Math.floor(l.t * 30), l.y, l.len, 1);
     }
   }
-
-  let frame = Math.floor(t * 4.5) % 2;
-  if (now < actionUntil) frame = action;
-  else if (!still && now - start > nextCheer) { action = 3; actionUntil = now + 1100; nextCheer = now - start + 14000 + Math.random() * 8000; frame = 3; }
-  if (still) frame = 0;
-
-  if (kid.complete && kid.naturalWidth) g.drawImage(kid, frame * FRAME_W, 0, FRAME_W, FRAME_H, kx - ANCHOR_X, ky - ANCHOR_Y, FRAME_W, FRAME_H);
-
+  if (!still && t > cheerAt) { cheerUntil = t + 1.1; cheerAt = t + 14 + Math.random() * 8; }
+  const frame = still ? 0 : t < cheerUntil ? 3 : Math.floor(t * 4.5) % 2;
+  if (kid.naturalWidth) g.drawImage(kid, frame * FRAME_W, 0, FRAME_W, FRAME_H, kx - ANCHOR_X, ky - ANCHOR_Y, FRAME_W, FRAME_H);
   if (frame === 3) {
     g.fillStyle = '#ffe9a8';
-    for (let i = 0; i < 8; i++) {
-      const a = i / 8 * Math.PI * 2 + t * 3, r = 13 + (i % 2) * 4;
-      g.fillRect(kx + Math.round(Math.cos(a) * r), ky - 16 + Math.round(Math.sin(a) * r * .7), 1 + (i % 2), 1 + (i % 2));
-    }
+    for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2 + t * 3, r = 13 + (i % 2) * 4; g.fillRect(kx + Math.round(Math.cos(a) * r), ky - 16 + Math.round(Math.sin(a) * r * .7), 1 + (i % 2), 1 + (i % 2)); }
   }
-  const tf = t - toxicFlash;
-  if (tf < .5) {
-    const a = (1 - tf / .5);
-    g.fillStyle = `rgba(141,255,58,${.18 * a})`; g.fillRect(0, 0, W, H);
-    g.fillStyle = `rgba(164,60,255,${.5 * a})`;
-    for (let y = 0; y < H; y += 2) { g.fillRect(0, y, 3, 1); g.fillRect(W - 3, y + 1, 3, 1); }
-    for (let x = 0; x < W; x += 2) { g.fillRect(x, 0, 1, 3); g.fillRect(x + 1, H - 3, 1, 3); }
-  }
-  const ff = t - feedFlash;
-  if (ff < .4) { g.fillStyle = `rgba(143,240,160,${.5 * (1 - ff / .4)})`; g.fillRect(0, top + 40, 3, 62); }
   if (!still) requestAnimationFrame(draw);
 }
-const go = () => requestAnimationFrame(draw);
-if (still) { let n = 0; const once = () => { if (++n === 2) go(); }; bg.addEventListener('load', once); kid.addEventListener('load', once); } else go();
+if (still) { let n = 0; const once = () => { if (++n === 2) requestAnimationFrame(draw); }; bg.addEventListener('load', once); kid.addEventListener('load', once); }
+else requestAnimationFrame(draw);
 }
 </script>
 </body>
