@@ -13,3 +13,8 @@ All scene layers live in `assets/` as separate images (glow, walls, water, raft,
 ## Credits
 - Food icons: "16x16 Food" by ARoachIFoundOnMyPillow, from OpenGameArt — CC0 (public domain).
 - Background and boy sprites: generated for this project and cleaned into pixel art.
+
+## Structure
+- `index.html` — the hub: a portal chamber. The open portal leads to the Gut world; the sealed doors are for future worlds.
+- `gut/index.html` — the Gut world.
+- `assets/sound.js` — shared chiptune sound engine for all worlds.

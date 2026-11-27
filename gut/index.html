@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Housebiom</title>
+<link rel="artifact-thumbnail" href="../thumb.jpg">
+<link href="https://fonts.googleapis.com/css2?family=Silkscreen&display=swap" rel="stylesheet">
+<style>
+/* VOICE: calm, cozy, retro
+   IDEA: a Game Boy Advance era scene inside the gut that you simply watch
+   PICTURE: the whole screen is the pixel canvas at an integer scale
+   COLOUR and TYPE: the art's crimson and teal; Silkscreen for the journal
+   LAYOUT: full-bleed canvas, one journal button top left */
+:root{color-scheme:dark}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%;background:#4a0f1a;overflow:hidden}
+canvas{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);image-rendering:pixelated;image-rendering:crisp-edges}
+.journal{position:absolute;left:14px;top:12px;z-index:2;font:15px/1.3 Silkscreen,monospace;color:#fff3dc;display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.journal button{font:inherit;color:#fff3dc;background:#2a0a12;border:3px solid #fff3dc;box-shadow:2px 2px 0 #120306;padding:5px 10px;cursor:pointer;display:flex;align-items:center;gap:8px;min-height:40px}
+.journal button b{color:#ffe17a;font-weight:normal}
+.journal button:focus-visible{outline:3px solid #8ff0c8;outline-offset:2px}
+.sound{position:absolute;right:14px;top:12px;z-index:3;width:48px;height:48px;padding:0;background:#2a0a12;border:3px solid #fff3dc;box-shadow:2px 2px 0 #120306;cursor:pointer;display:grid;place-items:center}
+.sound:focus-visible{outline:3px solid #8ff0c8;outline-offset:2px}
+.sound .w{opacity:0}.sound[aria-pressed=true] .w{opacity:1}.sound[aria-pressed=true] .x{opacity:0}
+.tag{position:absolute;z-index:2;transform:translate(-50%,-100%);font:14px/1.2 Silkscreen,monospace;color:#2a120a;background:#fff3dc;border:3px solid #2a120a;box-shadow:3px 3px 0 #120306;padding:4px 8px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .15s}
+.tag.on{opacity:1}
+.back{position:absolute;right:72px;top:12px;z-index:3;height:48px;padding:0 12px 0 8px;background:#2a0a12;border:3px solid #fff3dc;box-shadow:2px 2px 0 #120306;color:#fff3dc;font:14px Silkscreen,monospace;cursor:pointer;display:flex;align-items:center;gap:6px;text-decoration:none}
+.back:focus-visible{outline:3px solid #8ff0c8;outline-offset:2px}
+.veil{position:fixed;inset:0;z-index:20;pointer-events:none;background:radial-gradient(circle at 50% 50%,#ff8a7a 0,#c0283c 35%,#3a0610 75%);opacity:1;transition:opacity .9s ease-out}
+.veil.off{opacity:0}
+.veil.on{opacity:1;transition:opacity .45s ease-in}
+@media(prefers-reduced-motion:reduce){.veil{transition:none}}
+.bookbtn{position:relative;background:none!important;border:0!important;box-shadow:none!important;padding:0!important;cursor:pointer;filter:drop-shadow(3px 3px 0 #120306);transition:transform .15s}
+.bookbtn:hover{transform:translateY(-3px) rotate(-4deg)}
+.bookbtn b{position:absolute;right:-8px;top:-6px;min-width:26px;height:26px;padding:0 5px;background:#ffd34a;color:#2a120a!important;border:3px solid #2a120a;font-size:13px;line-height:20px;text-align:center}
+.book-wrap{position:absolute;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(20,2,6,.6);opacity:0;pointer-events:none;transition:opacity .25s}
+.book-wrap.on{opacity:1;pointer-events:auto}
+.book{position:relative;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:minmax(0,1fr);width:min(860px,100%);height:min(620px,calc(100dvh - 32px));background:#6b3a22;border:4px solid #2a120a;box-shadow:6px 6px 0 #120306,inset 0 0 0 4px #8f5230;padding:14px;perspective:1600px;font:14px/1.3 Silkscreen,monospace;color:#3a1a14}
+.leaf{background:#f3e6c8;background-image:repeating-linear-gradient(#f3e6c8 0 23px,#e6d4ae 23px 24px);padding:18px 18px 22px;overflow:auto;min-height:0;box-shadow:inset 0 0 0 3px #e0caa0;transform-style:preserve-3d;transition:transform .55s cubic-bezier(.2,.7,.2,1),opacity .55s}
+.leaf.l{transform-origin:right center;box-shadow:inset -18px 0 22px -14px rgba(60,20,10,.45),inset 0 0 0 3px #e0caa0}
+.leaf.r{transform-origin:left center;box-shadow:inset 18px 0 22px -14px rgba(60,20,10,.45),inset 0 0 0 3px #e0caa0}
+.book-wrap:not(.on) .leaf.l{transform:rotateY(80deg);opacity:0}
+.book-wrap:not(.on) .leaf.r{transform:rotateY(-80deg);opacity:0}
+.leaf h2{font:inherit;font-size:18px;margin:0 0 12px;display:flex;align-items:center;gap:8px}
+.leaf.l h2{color:#2f7a48}.leaf.r h2{color:#a4263a}
+.leaf p{margin:0 0 12px;font-size:13px;color:#7a5a44}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(98px,1fr));gap:8px}
+.cell{min-height:86px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border:3px solid #c9ad7c;background:#fbf3df;text-align:center;font-size:11px;line-height:1.15;padding:6px 4px;color:#3a1a14;min-width:0;overflow-wrap:anywhere}
+.cell img{width:32px;height:32px;image-rendering:pixelated}
+.cell.on{cursor:pointer;transition:transform .12s}
+.cell.on:hover,.cell.on:focus-visible{transform:translateY(-3px);outline:none;box-shadow:3px 3px 0 rgba(58,26,20,.25)}
+.cell.on:hover img,.cell.on:focus-visible img{animation:hop .45s steps(4)}
+@keyframes hop{30%{transform:translateY(-6px) rotate(-8deg)}60%{transform:translateY(0) rotate(6deg)}}
+.leaf.l .cell.on{border-color:#5cae74;background:#eef8e6}
+.leaf.r .cell.on{border-color:#d0606e;background:#fbe8e6}
+.leaf.r .cell.on img{filter:saturate(.55) brightness(.85)}
+.cell.empty{border-style:dashed;background:transparent;opacity:.55}
+.cell.empty{cursor:pointer;font:inherit;color:#b89a6a}
+.cell.empty .plus{font-size:22px;opacity:0;transition:opacity .15s}
+.cell.empty:hover,.cell.empty:focus-visible{opacity:1;border-color:#a8875a;outline:none}
+.cell.empty:hover .plus,.cell.empty:focus-visible .plus{opacity:1}
+.cell{position:relative}
+.cell .rm{position:absolute;right:2px;top:2px;width:22px;height:22px;padding:0;border:0;background:none;color:#9a6a60;font:16px Silkscreen,monospace;cursor:pointer;opacity:0}
+.cell:hover .rm,.cell:focus-within .rm{opacity:1}
+.cell.fresh{animation:fresh 1.2s ease-out}
+@keyframes fresh{0%{transform:scale(.6);background:#fff7b0}50%{transform:scale(1.08)}100%{transform:none}}
+.picker{display:contents}
+.pickin{position:absolute;inset:14px;z-index:3;background:#f3e6c8;border:3px solid #2a120a;box-shadow:4px 4px 0 rgba(18,3,6,.5);padding:14px;display:flex;flex-direction:column;gap:10px;min-height:0}
+.pickin[hidden]{display:none}
+.pickin h3{font:inherit;font-size:17px;margin:0;color:#2f7a48}
+.picker.bad .pickin h3,.pickin.bad h3{color:#a4263a}
+.pickin input{font:15px Silkscreen,monospace;color:#3a1a14;background:#fbf3df;border:3px solid #c9ad7c;padding:8px 10px;min-height:44px;width:100%}
+.pickin input:focus{outline:3px solid #8ff0c8;outline-offset:1px}
+.pick-grid{flex:1;min-height:0;overflow:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(44px,1fr));gap:4px;align-content:start;padding:2px}
+.pk{aspect-ratio:1;border:2px solid transparent;background:#fbf3df;cursor:pointer;padding:4px;display:grid;place-items:center}
+.pk[hidden]{display:none}
+.pk img{width:32px;height:32px;image-rendering:pixelated}
+.pk:hover,.pk:focus-visible{border-color:#c9ad7c;outline:none}
+.pk.sel{border-color:#2f7a48;background:#eef8e6}
+.pick-hint{margin:0;font-size:13px;color:#7a5a44}
+.pick-hint[hidden]{display:none}
+.pick-name{display:flex;align-items:center;gap:10px;font-size:14px}
+.pick-actions{display:flex;gap:10px;justify-content:flex-end}
+.pick-actions button{font:15px Silkscreen,monospace;min-height:44px;padding:0 16px;border:3px solid #2a120a;cursor:pointer;background:#fbf3df;color:#3a1a14}
+.pick-actions button[type=submit]{background:#2f7a48;color:#fff3dc}
+.pick-actions button:disabled{opacity:.45;cursor:default}
+.pick-actions button:focus-visible{outline:3px solid #8ff0c8;outline-offset:2px}
+.close{position:absolute;right:-14px;top:-14px;width:44px;height:44px;border:3px solid #fff3dc;background:#2a0a12;color:#fff3dc;font:20px Silkscreen,monospace;cursor:pointer;box-shadow:2px 2px 0 #120306}
+.close:focus-visible{outline:3px solid #8ff0c8;outline-offset:2px}
+@media(max-width:620px){.book{grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto;height:auto;max-height:calc(100dvh - 32px);overflow:auto}.leaf{overflow:visible}.leaf.l{transform-origin:center bottom}.leaf.r{transform-origin:center top}.book-wrap:not(.on) .leaf.l{transform:rotateX(-80deg)}.book-wrap:not(.on) .leaf.r{transform:rotateX(80deg)}.close{right:-6px;top:-6px}}
+@media(prefers-reduced-motion:reduce){.leaf{transition:none}}
+.strength{position:absolute;left:50%;bottom:max(16px,env(safe-area-inset-bottom));transform:translateX(-50%);z-index:2;display:flex;align-items:center;gap:8px;font:13px Silkscreen,monospace;color:#fff3dc;text-shadow:2px 2px 0 #120306;white-space:nowrap;max-width:calc(100vw - 16px)}
+.strength b{font-weight:normal;color:#ffe17a}
+.segs{display:flex;gap:2px;padding:3px;background:#2a0a12;border:3px solid #fff3dc;box-shadow:2px 2px 0 #120306}
+.segs i{width:clamp(4px,calc((100vw - 110px) / 40),11px);height:14px;background:#4a1a22;position:relative;overflow:hidden}
+.segs i.on{background:linear-gradient(#fff3a8 0 3px,#ffd34a 3px 10px,#e0a020 10px)}
+.segs i.on::after{content:"";position:absolute;inset:0;background:rgba(255,255,255,.75);opacity:0;animation:glint 4s steps(1) infinite;animation-delay:calc(var(--i) * 70ms)}
+@keyframes glint{0%{opacity:.9}6%{opacity:0}}
+@media(prefers-reduced-motion:reduce){.segs i.on::after{animation:none}}
+.help{position:absolute;left:50%;bottom:64px;transform:translateX(-50%);z-index:2;font:14px/1.4 Silkscreen,monospace;color:#fff3dc;background:#2a0a12;border:3px solid #fff3dc;padding:6px 10px;text-align:center;pointer-events:none;transition:opacity 1s;max-width:calc(100vw - 24px)}
+canvas{touch-action:none;cursor:grab}
+</style>
+</head>
+<body>
+<div class="journal">
+  <button type="button" id="journalBtn" class="bookbtn" aria-haspopup="dialog" aria-label="Open journal"><svg viewBox="0 0 17 16" width="68" height="64" shape-rendering="crispEdges" aria-hidden="true"><rect x="1" y="0" width="15" height="15" fill="#2a120a"/><rect x="2" y="1" width="11" height="13" fill="#9a5a34"/><rect x="2" y="1" width="2" height="13" fill="#6b3a22"/><rect x="4" y="1" width="9" height="1" fill="#b87444"/><rect x="13" y="2" width="2" height="11" fill="#f3e6c8"/><rect x="13" y="4" width="2" height="1" fill="#d8c49a"/><rect x="13" y="7" width="2" height="1" fill="#d8c49a"/><rect x="13" y="10" width="2" height="1" fill="#d8c49a"/><rect x="6" y="4" width="5" height="4" fill="#2a120a"/><rect x="7" y="5" width="3" height="2" fill="#ffd34a"/><rect x="5" y="10" width="6" height="1" fill="#6b3a22"/><rect x="10" y="14" width="2" height="2" fill="#d0303a"/><rect x="10" y="15" width="1" height="1" fill="#8f1d28"/></svg><b id="count">0</b></button>
+</div>
+<div class="book-wrap" id="bookWrap" aria-hidden="true">
+  <div class="book" role="dialog" aria-modal="true" aria-label="Food journal">
+    <section class="leaf l"><h2>Good</h2><div class="grid" id="goodGrid"></div></section>
+    <section class="leaf r"><h2>Bad</h2><div class="grid" id="badGrid"></div></section>
+    <button class="close" id="closeBook" type="button" aria-label="Close journal">×</button>
+    <form class="picker" id="pickForm" autocomplete="off"><div id="picker" hidden class="pickin">
+      <h3 id="pickTitle">Log a good food</h3>
+      <input type="search" id="pickSearch" placeholder="Type a food, e.g. apple" aria-label="Food name">
+      <p class="pick-hint" id="pickHint" hidden>No exact picture, so I picked a stand-in. Tap any icon to change it.</p>
+      <div class="pick-grid" id="pickGrid"></div>
+      <label class="pick-name">Name <input type="text" id="pickName" maxlength="24" required></label>
+      <div class="pick-actions"><button type="button" id="pickCancel">Cancel</button><button type="submit" id="pickAdd" disabled>Add</button></div>
+    </div></form>
+  </div>
+</div>
+<div class="strength" role="img" id="strength"><div class="segs" id="segs"></div></div>
+<div class="help" id="help">Arrow keys or drag to float</div>
+<a class="back" id="back" href="../index.html" aria-label="Back to the hub"><svg viewBox="0 0 10 10" width="20" height="20" shape-rendering="crispEdges" aria-hidden="true"><rect x="1" y="4" width="8" height="2" fill="#fff3dc"/><rect x="2" y="3" width="2" height="4" fill="#fff3dc"/><rect x="3" y="2" width="1" height="6" fill="#fff3dc"/><rect x="4" y="1" width="1" height="1" fill="#fff3dc"/><rect x="4" y="8" width="1" height="1" fill="#fff3dc"/></svg>Hub</a>
+<div class="veil" id="veil"></div>
+<button type="button" class="sound" id="soundBtn" aria-pressed="false" aria-label="Sound"><svg viewBox="0 0 16 16" width="32" height="32" shape-rendering="crispEdges" aria-hidden="true"><rect x="2" y="6" width="3" height="4" fill="#fff3dc"/><rect x="5" y="5" width="1" height="6" fill="#fff3dc"/><rect x="6" y="4" width="1" height="8" fill="#fff3dc"/><rect x="7" y="3" width="1" height="10" fill="#fff3dc"/><g class="w" fill="#8ff0c8"><rect x="10" y="6" width="1" height="4"/><rect x="12" y="4" width="1" height="8"/><rect x="11" y="5" width="1" height="1"/><rect x="11" y="10" width="1" height="1"/></g><g class="x" fill="#ff8a8a"><rect x="10" y="6" width="1" height="1"/><rect x="11" y="7" width="1" height="1"/><rect x="12" y="8" width="1" height="1"/><rect x="13" y="9" width="1" height="1"/><rect x="13" y="6" width="1" height="1"/><rect x="12" y="7" width="1" height="1"/><rect x="11" y="8" width="1" height="1"/><rect x="10" y="9" width="1" height="1"/></g></svg></button>
+<div class="tag" id="tag"></div>
+<canvas id="c" role="img" aria-label="A winged man floats through a tunnel inside the gut while his safe foods drift by on the stream, glowing gold. Use the arrow keys or drag to float him around."></canvas>
+<script src="../assets/sound.js"></script>
+<script>
+{
+const cv = document.getElementById('c'), g = cv.getContext('2d');
+const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const BGS = 2, BG_H = 145, TILE_W = 514, FRAME_W = 51, FRAME_H = 55, ANCHOR_X = 25, ANCHOR_Y = 22;
+const bg = new Image(), kid = new Image();
+bg.src = '../assets/px-bg.png'; kid.src = '../assets/px-hero.png';
+
+/* foods logged in successfully */
+const FOODS = [
+  ['chicken','Chicken'],['rice','Rice'],['spinach','Spinach'],['carrot','Carrot'],['banana','Banana'],['eggs','Eggs'],['olive-oil','Olive oil'],
+  ['kiwi','Kiwi'],['watermelon','Watermelon'],['rice-cake','Rice cake'],['potato','Potato'],['peanut-butter','Peanut butter'],['pecan','Pecan'],['pumpkin-seed','Pumpkin seed']
+].map(([key, name]) => { const img = new Image(); img.src = `../assets/food/${key}.png`; return {key, name, img, aura: null}; });
+
+/* golden aura: pixel rings that follow each icon's silhouette */
+function makeAura(f) {
+  const P = 3, S = 16 + P * 2;
+  const c = document.createElement('canvas'); c.width = c.height = 16;
+  const x = c.getContext('2d'); x.drawImage(f.img, 0, 0);
+  let a;
+  try { a = x.getImageData(0, 0, 16, 16).data; } catch (e) { return; }
+  const m = new Uint8Array(S * S);
+  for (let y = 0; y < 16; y++) for (let xx = 0; xx < 16; xx++) if (a[(y * 16 + xx) * 4 + 3] > 40) m[(y + P) * S + xx + P] = 1;
+  const grow = src => { const o = src.slice(); for (let y = 1; y < S - 1; y++) for (let xx = 1; xx < S - 1; xx++) if (!src[y * S + xx] && (src[y * S + xx - 1] || src[y * S + xx + 1] || src[(y - 1) * S + xx] || src[(y + 1) * S + xx])) o[y * S + xx] = 1; return o; };
+  const d1 = grow(m), d2 = grow(d1), d3 = grow(d2);
+  const cols = [[255,246,192,230],[255,216,106,140],[255,190,80,55]];
+  f.aura = [0, 1].map(phase => {
+    const k2 = document.createElement('canvas'); k2.width = k2.height = S;
+    const g2 = k2.getContext('2d'), im = g2.createImageData(S, S);
+    for (let i = 0; i < S * S; i++) {
+      const y = Math.floor(i / S), xx = i % S;
+      let col = null;
+      if (d1[i] && !m[i]) col = cols[0];
+      else if (d2[i] && !d1[i]) col = cols[1];
+      else if (d3[i] && !d2[i] && (xx + y + phase) % 2 === 0) col = cols[2];
+      if (col) im.data.set(col, i * 4);
+    }
+    g2.putImageData(im, 0, 0);
+    return k2;
+  });
+}
+FOODS.forEach(f => { f.img.onload = () => makeAura(f); });
+
+/* journal book */
+const ICONS = ["almonds", "apple_green", "apple_red", "apple_yellow", "asparagus", "avocado_half", "avocado_whole", "bacon", "bagel", "baguette", "banana", "beet", "bell_pepper_green", "bell_pepper_red", "bell_pepper_yellow", "blueberries", "bread_loaf_brown", "bread_loaf_white", "breadroll", "breadstick", "broccoli", "burger", "burrito", "butter", "cabbage", "cake_slice_chocolate", "cake_slice_plain", "cake_whole_chocolate", "cake_whole_plain", "candy_cane", "candy_corn", "canned_food_1", "canned_food_2", "canned_food_3", "canned_food_4", "cantaloupe_slice", "cantaloupe_whole", "carrot", "cauliflower", "celery", "cheese", "cheese_puffs", "cherries", "chestnut", "chicken_drumstick_cooked", "chicken_drumstick_raw", "chicken_nuggets", "chili_pepper_green", "chili_pepper_red", "chocolate", "churro", "cinnamon", "coconut_half", "coconut_whole", "cookie", "corn", "corn_maize_blue", "corn_maize_red", "crab_legs", "cranberries", "croissant", "cucumber", "cupcake_chocolate", "cupcake_vanilla", "dango", "doughnut_chocolate", "doughnut_pink", "doughnut_pink_sprinkles", "dumpling", "durian", "egg_fried", "egg_whole_blue", "egg_whole_brown", "egg_whole_white", "eggplant", "falafel", "fig", "fish_fillet", "fish_sticks", "flan", "flatbread", "fortune_cookie", "french_fries", "fruitcake", "garbanzo_beans", "garlic", "ginger", "gingerbread_man", "grapes_green", "grapes_purple", "gulab_jamun", "ham", "honey_pot", "hotdog", "icecream_chocolate", "icecream_mint", "icecream_vanilla", "jalebi", "jello", "kale", "kiwi", "lemon", "lemon_lime", "lettuce", "lollipop", "lychee", "macaroni", "mango", "mochi", "moon_cake", "muffin_blueberry", "muffin_plain", "mushroom", "narutomaki", "octopus", "olives_black", "olives_green", "onion_brown", "onion_purple", "onionrings", "orange", "oyster", "pancakes", "pea_pod", "peach", "peanut", "pear", "peppermint", "persimmon", "pie_cherry_slice", "pie_cherry_whole", "pie_pumpkin_slice", "pie_pumpkin_whole", "pineapple", "pistachios", "pizza_cheese_slice", "pizza_cheese_whole", "pizza_pepperoni_slice", "pizza_pepperoni_whole", "pizza_vegetable_slice", "pizza_vegetable_whole", "plum", "pomegranate", "popcorn", "popsicle", "potato", "pretzel", "pumpkin", "quiche", "radish", "raisins", "rice_ball", "rice_cracker", "rubus_blackberry", "rubus_raspberry", "samosa", "sandwich", "sausage", "scallions", "shrimp", "shrimp_fried", "soup_beet", "soup_miso", "soup_mushroom", "soup_pea", "spinach", "squash", "steak_grilled", "steak_raw", "strawberry", "stuffed_pita", "sushi_inari", "sushi_nigiri", "sushi_roll", "taco", "tamale", "taro", "tofu", "tomato", "turnip", "ube", "umbrella_fruit", "unagi", "vanilla", "waffle", "watermelon_slice", "watermelon_whole", "yam"];
+const human = k => k.replace(/_/g, ' ').replace(/^./, c => c.toUpperCase());
+const BAD = [['oat','Oat'],['pear','Pear'],['sweet-potato','Sweet potato']].map(([key, name]) => ({key, name, src: `../assets/food/${key}.png`}));
+const STORE = 'housebiom-log-v1';
+let log = {good: [], bad: []};
+try { const v = JSON.parse(localStorage.getItem(STORE) || 'null'); if (v && Array.isArray(v.good) && Array.isArray(v.bad)) log = v; } catch (e) {}
+const validIcon = i => ICONS.includes(i);
+log.good = log.good.filter(x => x && typeof x.name === 'string' && validIcon(x.icon));
+log.bad = log.bad.filter(x => x && typeof x.name === 'string' && validIcon(x.icon));
+const save = () => { try { localStorage.setItem(STORE, JSON.stringify(log)); } catch (e) {} };
+const BASE_GOOD = FOODS.length;
+function addGoodFood(x) {
+  const img = new Image(); img.src = `../assets/pack/${x.icon}.png`;
+  const f = {key: 'u-' + x.icon + '-' + FOODS.length, name: x.name, img, aura: null, user: x};
+  img.onload = () => makeAura(f);
+  FOODS.push(f);
+  return f;
+}
+log.good.forEach(addGoodFood);
+const badItems = () => [...BAD, ...log.bad.map(x => ({key: 'u', name: x.name, src: `../assets/pack/${x.icon}.png`, user: x}))];
+
+const btn = document.getElementById('journalBtn'), wrap = document.getElementById('bookWrap');
+const segs = document.getElementById('segs');
+function renderStrength() {
+  const n = FOODS.length, total = Math.max(40, Math.ceil(n / 10) * 10);
+  segs.innerHTML = '';
+  for (let i = 0; i < total; i++) {
+    const el = document.createElement('i'), f = FOODS[i];
+    el.style.setProperty('--i', i);
+    if (f) { el.className = 'on'; el.title = f.name; }
+    segs.appendChild(el);
+  }
+  document.getElementById('strength').setAttribute('aria-label', `Strength: ${n} of ${total} foods logged successfully`);
+  document.getElementById('count').textContent = n;
+}
+let justAdded = null;
+function fillGrid(el, items, min, side) {
+  el.innerHTML = '';
+  const n = Math.max(min, (Math.floor(items.length / 3) + 2) * 3);
+  for (let i = 0; i < n; i++) {
+    const f = items[i];
+    if (f) {
+      const c = document.createElement('div');
+      c.className = 'cell on' + (f.user && f.user === justAdded ? ' fresh' : ''); c.tabIndex = 0;
+      c.innerHTML = '<img alt=""><span></span>';
+      c.querySelector('img').src = f.src || f.img.src; c.querySelector('span').textContent = f.name;
+      c.addEventListener('mouseenter', () => sound.hop()); c.addEventListener('focus', () => sound.hop());
+      if (f.user) {
+        const x = document.createElement('button'); x.type = 'button'; x.className = 'rm'; x.textContent = '×';
+        x.setAttribute('aria-label', 'Remove ' + f.name);
+        x.addEventListener('click', e => { e.stopPropagation(); removeEntry(side, f.user); });
+        c.appendChild(x);
+      }
+      el.appendChild(c);
+    } else {
+      const c = document.createElement('button'); c.type = 'button'; c.className = 'cell empty';
+      c.setAttribute('aria-label', side === 'good' ? 'Log a new good food' : 'Log a new bad food');
+      c.innerHTML = '<span class="plus">+</span>';
+      c.addEventListener('click', () => openPicker(side));
+      el.appendChild(c);
+    }
+  }
+}
+function renderJournal() {
+  fillGrid(document.getElementById('goodGrid'), FOODS, 21, 'good');
+  fillGrid(document.getElementById('badGrid'), badItems(), 9, 'bad');
+  renderStrength();
+}
+function removeEntry(side, entry) {
+  log[side] = log[side].filter(x => x !== entry); save();
+  if (side === 'good') { const i = FOODS.findIndex(f => f.user === entry); if (i >= 0) FOODS.splice(i, 1); bag = []; for (let j = floats.length - 1; j >= 0; j--) if (floats[j].f.user === entry) floats.splice(j, 1); }
+  renderJournal();
+}
+
+/* picker */
+const picker = document.getElementById('picker'), pickGrid = document.getElementById('pickGrid'), pickSearch = document.getElementById('pickSearch'), pickName = document.getElementById('pickName'), pickAdd = document.getElementById('pickAdd');
+let pickSide = 'good', pickIcon = null, nameEdited = false;
+pickGrid.innerHTML = ICONS.map(i => `<button type="button" class="pk" data-i="${i}" title="${human(i)}" aria-label="${human(i)}"><img src="../assets/pack/${i}.png" alt="" loading="lazy"></button>`).join('');
+function openPicker(side) {
+  pickSide = side; pickIcon = null; nameEdited = false; iconChosen = false;
+  document.getElementById('pickTitle').textContent = side === 'good' ? 'Log a good food' : 'Log a bad food';
+  picker.classList.toggle('bad', side === 'bad');
+  pickSearch.value = ''; pickName.value = ''; filterPicker(); updateAdd();
+  pickGrid.querySelectorAll('.pk.sel').forEach(b => b.classList.remove('sel'));
+  picker.hidden = false; pickSearch.focus(); sound.blip();
+}
+function closePicker() { picker.hidden = true; }
+function filterPicker() {
+  const q = pickSearch.value.trim().toLowerCase().replace(/\s+/g, '_');
+  let shown = 0;
+  pickGrid.querySelectorAll('.pk').forEach(b => { b.hidden = !!q && !b.dataset.i.includes(q); if (!b.hidden) shown++; });
+  const none = !!q && !shown;
+  if (none) pickGrid.querySelectorAll('.pk').forEach(b => b.hidden = false);
+  document.getElementById('pickHint').hidden = !none;
+}
+function updateAdd() { pickAdd.disabled = !(pickIcon && pickName.value.trim()); }
+function bestIcon(q) {
+  q = q.trim().toLowerCase().replace(/s\b/g, '').replace(/\s+/g, '_');
+  if (!q) return null;
+  const SYN = {salmon:'fish_fillet', tuna:'fish_fillet', cod:'fish_fillet', fish:'fish_fillet', sardine:'fish_fillet', beef:'steak_grilled', meat:'steak_grilled', lamb:'steak_grilled', turkey:'chicken_drumstick_cooked', egg:'egg_fried', bread:'bread_loaf_white', toast:'bread_loaf_white', nut:'almonds', walnut:'almonds', cashew:'almonds', berry:'blueberries', strawberrie:'strawberry', zucchini:'cucumber', courgette:'cucumber', oat:'soup_mushroom', oatmeal:'soup_mushroom', porridge:'soup_mushroom', soup:'soup_miso', quinoa:'rice_ball', lentil:'garbanzo_beans', bean:'garbanzo_beans', chickpea:'garbanzo_beans', hummus:'garbanzo_beans', date:'fig', sweet_potato:'yam', pepper:'bell_pepper_red', greens:'kale', salad:'lettuce', pasta:'macaroni', noodle:'macaroni', cheese:'cheese', butter:'butter', honey:'honey_pot', melon:'cantaloupe_slice', grape:'grapes_green', apple:'apple_red'};
+  if (SYN[q]) return SYN[q];
+  let best = null, score = 0;
+  for (const i of ICONS) {
+    const words = i.split('_');
+    let sc = i === q ? 100 : words[0] === q ? 80 : i.startsWith(q) ? 60 : words.some(w => w.startsWith(q)) ? 50 : q.split('_').some(w => w.length > 2 && words.some(x => x.startsWith(w))) ? 20 : 0;
+    if (sc > score) { score = sc; best = i; }
+  }
+  return best;
+}
+function selectIcon(i, scroll) {
+  pickGrid.querySelectorAll('.pk.sel').forEach(x => x.classList.remove('sel'));
+  const b = i && pickGrid.querySelector(`.pk[data-i="${i}"]`);
+  if (b) { b.classList.add('sel'); if (scroll) b.scrollIntoView({block: 'nearest'}); }
+  pickIcon = b ? i : null;
+}
+let iconChosen = false;
+pickSearch.addEventListener('input', () => {
+  filterPicker();
+  if (!nameEdited) pickName.value = pickSearch.value.trim().replace(/^./, c => c.toUpperCase());
+  if (!iconChosen) selectIcon(bestIcon(pickSearch.value) || (pickSearch.value.trim() ? 'canned_food_1' : null), true);
+  updateAdd();
+});
+pickSearch.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); if (!pickAdd.disabled) document.getElementById('pickForm').requestSubmit(); } });
+pickName.addEventListener('input', () => { nameEdited = true; updateAdd(); });
+pickGrid.addEventListener('click', e => {
+  const b = e.target.closest('.pk'); if (!b) return;
+  pickGrid.querySelectorAll('.pk.sel').forEach(x => x.classList.remove('sel'));
+  b.classList.add('sel'); pickIcon = b.dataset.i; iconChosen = true; sound.hop();
+  if (!nameEdited) pickName.value = human(pickIcon);
+  updateAdd();
+});
+document.getElementById('pickCancel').addEventListener('click', closePicker);
+document.getElementById('pickForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const name = pickName.value.trim().slice(0, 24);
+  if (!pickIcon || !name) return;
+  const entry = {name, icon: pickIcon, t: Date.now()};
+  log[pickSide].push(entry); save(); justAdded = entry;
+  if (pickSide === 'good') { const f = addGoodFood(entry); floats.push({f, x: W + 4, ph: 0}); bag = []; sound.sparkle(); }
+  else sound.hop();
+  closePicker(); renderJournal();
+});
+renderJournal();
+
+let lastFocus = null;
+function toggle(open) {
+  const was = wrap.classList.contains('on'), on = open ?? !was;
+  if (on === was) return;
+  if (!on) closePicker();
+  wrap.classList.toggle('on', on); wrap.setAttribute('aria-hidden', String(!on));
+  if (typeof sound !== 'undefined') sound.page();
+  if (on) { lastFocus = document.activeElement; document.getElementById('closeBook').focus(); }
+  else if (lastFocus) lastFocus.focus();
+}
+btn.addEventListener('click', () => toggle(true));
+document.getElementById('closeBook').addEventListener('click', () => toggle(false));
+wrap.addEventListener('click', e => { if (e.target === wrap) toggle(false); });
+addEventListener('keydown', e => { if (e.key === 'Escape') { if (!picker.hidden) closePicker(); else toggle(false); } });
+/* floating him yourself: keys or drag; he drifts on his own when left alone */
+let px = null, py = null, goal = null, lastInput = -99, face = 1, pose = 0, poseUntil = 0, nextPoseAt = 8, wander = null, wanderAt = 0, speed = 0;
+const keys = new Set();
+const toNative = e => { const r = cv.getBoundingClientRect(); return {x: (e.clientX - r.left) / k, y: (e.clientY - r.top) / k}; };
+cv.addEventListener('pointerdown', e => { toggle(false); cv.setPointerCapture(e.pointerId); goal = toNative(e); });
+cv.addEventListener('pointermove', e => { if (goal) goal = toNative(e); });
+const endDrag = () => { goal = null; };
+cv.addEventListener('pointerup', endDrag); cv.addEventListener('pointercancel', endDrag);
+addEventListener('keydown', e => { const kk = e.key.toLowerCase(); if (['arrowup','arrowdown','arrowleft','arrowright','w','a','s','d'].includes(kk)) { keys.add(kk); e.preventDefault(); } });
+addEventListener('keyup', e => keys.delete(e.key.toLowerCase()));
+addEventListener('blur', () => keys.clear());
+setTimeout(() => document.getElementById('help').style.opacity = 0, 6000);
+
+/* hovering or tapping a floating food */
+const tag = document.getElementById('tag');
+let hovered = null, tagHideT = 0;
+function foodAt(n) { for (const o of floats) if (n.x > o.x - 3 && n.x < o.x + 19 && n.y > top + 101 * BGS - 18 && n.y < top + 101 * BGS + 3) return o; return null; }
+function showTag(o) {
+  const r = cv.getBoundingClientRect();
+  tag.textContent = o.f.name;
+  const x = r.left + (o.x + 8) * k, hw = tag.offsetWidth / 2 + 8;
+  tag.style.left = Math.max(hw, Math.min(innerWidth - hw, x)) + 'px';
+  tag.style.top = (r.top + (top + 101 * BGS - 20) * k) + 'px';
+  tag.classList.add('on');
+}
+cv.addEventListener('pointermove', e => {
+  if (goal || e.pointerType !== 'mouse') return;
+  const o = foodAt(toNative(e));
+  if (o !== hovered) { hovered = o; if (o) { sound.blip(); showTag(o); } else tag.classList.remove('on'); }
+  cv.style.cursor = o ? 'pointer' : 'grab';
+});
+cv.addEventListener('pointerleave', () => { hovered = null; tag.classList.remove('on'); });
+cv.addEventListener('pointerdown', e => {
+  const o = foodAt(toNative(e));
+  if (o) { goal = null; hovered = o; o.boost = performance.now(); sound.blip(); showTag(o); clearTimeout(tagHideT); if (e.pointerType !== 'mouse') tagHideT = setTimeout(() => { hovered = null; tag.classList.remove('on'); }, 1800); }
+});
+
+
+
+/* ---------- sound: synthesized chiptune ambience and effects ---------- */
+const sound = window.HBSound;
+const soundBtn = document.getElementById('soundBtn');
+sound.bindButton(soundBtn);
+/* arriving through the portal, and going back */
+const veil = document.getElementById('veil');
+requestAnimationFrame(() => requestAnimationFrame(() => veil.classList.add('off')));
+document.getElementById('back').addEventListener('click', e => {
+  e.preventDefault();
+  sound.whoosh && sound.whoosh();
+  veil.classList.remove('off'); veil.classList.add('on');
+  setTimeout(() => { location.href = '../index.html'; }, still ? 0 : 480);
+});
+
+
+
+/* canvas sizing at an integer pixel scale */
+let W = 0, H = 0, k = 1, top = 0, topCol = '#4a0f1a', botCol = '#4a0f1a';
+function fit() {
+  const vw = innerWidth, vh = innerHeight;
+  k = Math.max(1, Math.min(Math.ceil(vh / (BG_H * BGS)), Math.floor(vw / 110)));
+  W = Math.ceil(vw / k); H = Math.ceil(vh / k);
+  cv.width = W; cv.height = H;
+  cv.style.width = W * k + 'px'; cv.style.height = H * k + 'px';
+  top = Math.floor((H - BG_H * BGS) / 2);
+  g.imageSmoothingEnabled = false;
+}
+addEventListener('resize', fit); fit();
+bg.onload = () => {
+  const t = document.createElement('canvas'); t.width = 1; t.height = BG_H;
+  const c = t.getContext('2d'); c.drawImage(bg, 0, 0, 1, BG_H, 0, 0, 1, BG_H);
+  try {
+    const px = y => { const d = c.getImageData(0, y, 1, 1).data; return `rgb(${d[0]},${d[1]},${d[2]})`; };
+    topCol = px(0); botCol = px(BG_H - 1); document.body.style.background = topCol;
+  } catch (e) {}
+};
+
+const bubbles = Array.from({length: 10}, () => ({x: Math.random() * TILE_W, life: Math.random()}));
+const lines = Array.from({length: 4}, (_, i) => ({y: 0, len: 0, t: i / 4}));
+const floats = [];
+let bag = [], spawnAt = 0, cheerAt = 9, cheerUntil = 0;
+const nextFood = () => { if (!bag.length) bag = FOODS.slice().sort(() => Math.random() - .5); return bag.pop(); };
+
+const start = performance.now(); let lastT = 0;
+function draw(now) {
+  const t = (now - start) / 1000, dt = Math.min(.05, t - lastT); lastT = t;
+  g.fillStyle = topCol; g.fillRect(0, 0, W, top + 1);
+  g.fillStyle = botCol; g.fillRect(0, top + BG_H * BGS - 1, W, H - top - BG_H * BGS + 1);
+  const scroll = 0;
+  if (bg.naturalWidth) for (let x = -scroll; x < W; x += TILE_W * BGS) g.drawImage(bg, x, top, TILE_W * BGS, BG_H * BGS);
+
+  if (!still) {
+    g.fillStyle = '#9ff0d0';
+    for (const b of bubbles) {
+      b.life += dt * .5;
+      if (b.life > 1) { b.life = 0; b.x = Math.random() * TILE_W; }
+      const sx = b.x % TILE_W;
+      if (b.life < .85) for (let x = sx * BGS; x < W; x += TILE_W * BGS) g.fillRect(Math.floor(x), top + 96 * BGS - Math.floor(b.life * 22), 1, 1);
+    }
+  }
+
+  /* foods floating on the stream */
+  if (!still && t > spawnAt) { floats.push({f: nextFood(), x: W + 4, ph: Math.random() * 6}); spawnAt = t + 2.2 + Math.random() * 1.8; }
+  if (still && !floats.length) FOODS.slice(0, 6).forEach((f, i) => floats.push({f, x: 12 + i * Math.floor(W / 6), ph: i}));
+  for (let i = floats.length - 1; i >= 0; i--) {
+    const o = floats[i];
+    if (!still) o.x -= dt * 18;
+    if (o.x < -24) { if (o === hovered) { hovered = null; tag.classList.remove('on'); } floats.splice(i, 1); continue; }
+    const hot = o === hovered;
+    const fx = Math.round(o.x), wl = top + 101 * BGS + (still ? 0 : Math.round(Math.sin(t * 2 + o.ph))) - (hot ? 3 : 0);
+    if (hot) showTag(o);
+    if (o.f.aura) {
+      g.globalAlpha = hot ? 1 : still ? .8 : Math.max(.15, .55 + .45 * Math.sin(t * 3 + o.ph));
+      g.drawImage(o.f.aura[still ? 0 : Math.floor(t * 3) % 2], 0, 0, 22, 16, fx - 3, wl - 16, 22, 16);
+      g.globalAlpha = 1;
+    }
+    if (o.f.img.naturalWidth) g.drawImage(o.f.img, 0, 0, 16, 13, fx, wl - 13, 16, 13);
+    g.fillStyle = 'rgba(190,255,230,.75)'; g.fillRect(fx + 1, wl, 4, 1); g.fillRect(fx + 9, wl, 5, 1);
+    if (hot && !still) { g.fillStyle = '#fffbe0'; for (let j = 0; j < 6; j++) { const a = j / 6 * Math.PI * 2 + t * 4; g.fillRect(fx + 8 + Math.round(Math.cos(a) * 12), wl - 7 + Math.round(Math.sin(a) * 9), 1, 1); } }
+    if (!still) {
+      const n = Math.floor(t * 1.6 + o.ph), tw = (t * 1.6 + o.ph) % 1, sx = fx + (n * 7) % 18 - 1, sy = wl - 15 + (n * 5) % 7;
+      if (tw < .5) { g.fillStyle = '#fffbe0'; g.fillRect(sx, sy, 1, 1); if (tw > .15 && tw < .35) { g.fillRect(sx - 1, sy, 3, 1); g.fillRect(sx, sy - 1, 1, 3); } }
+    }
+  }
+
+  /* he flies around the still room: you steer him, or he wanders on his own */
+  const minX = 26, maxX = W - 34, minY = top + 36 * BGS, maxY = top + 101 * BGS - 34;
+  if (px === null) { px = W * .4; py = top + 70 * BGS; }
+  const ox = px, oy = py;
+  let vx = 0, vy = 0;
+  if (keys.has('arrowleft') || keys.has('a')) vx -= 1;
+  if (keys.has('arrowright') || keys.has('d')) vx += 1;
+  if (keys.has('arrowup') || keys.has('w')) vy -= 1;
+  if (keys.has('arrowdown') || keys.has('s')) vy += 1;
+  if (vx || vy) { const m = Math.hypot(vx, vy); px += vx / m * 60 * dt; py += vy / m * 60 * dt; lastInput = t; wander = null; }
+  else if (goal) { const gx = goal.x - 6, gy = goal.y, d = Math.hypot(gx - px, gy - py); if (d > 1) { const st = Math.min(d, 70 * dt); px += (gx - px) / d * st; py += (gy - py) / d * st; } lastInput = t; wander = null; }
+  else if (!still && t - lastInput > 3) {
+    if (!wander || t > wanderAt) { wander = {x: minX + Math.random() * (maxX - minX), y: minY + 6 + Math.random() * (maxY - minY - 12)}; wanderAt = t + 7 + Math.random() * 6; }
+    const dx = wander.x - px, dy = wander.y - py, d = Math.hypot(dx, dy);
+    if (d > 2) { const st = Math.min(d, Math.min(22, d * .9) * dt); px += dx / d * st; py += dy / d * st; }
+  }
+  px = Math.max(minX, Math.min(maxX, px)); py = Math.max(minY, Math.min(maxY, py));
+  const vxNow = dt ? (px - ox) / dt : 0;
+  speed = speed * .85 + (dt ? Math.hypot(px - ox, py - oy) / dt : 0) * .15;
+  const moving = speed > 6;
+  if (Math.abs(vxNow) > 4) face = vxNow > 0 ? 1 : -1;
+  const kx = Math.round(px), ky = Math.round(py) + (still ? 0 : Math.round(Math.sin(t * 2.2) * 1.5));
+  if (!still && speed > 30) {
+    g.fillStyle = 'rgba(255,235,210,.55)';
+    for (const l of lines) {
+      l.t += dt * 1.2;
+      if (l.t > 1) { l.t = 0; l.y = ky - 4 + Math.floor(Math.random() * 20); l.len = 4 + Math.floor(Math.random() * 7); }
+      if (l.len && face > 0) g.fillRect(kx - 28 - Math.floor(l.t * 30), l.y, l.len, 1);
+      if (l.len && face < 0) g.fillRect(kx + 24 + Math.floor(l.t * 30), l.y, l.len, 1);
+    }
+  }
+  let frame = 0;
+  if (!still) {
+    if (moving) { frame = Math.floor(t * 3) % 2; poseUntil = 0; nextPoseAt = t + 6; }
+    else {
+      if (t > nextPoseAt) { pose = Math.random() < .55 ? 2 : 3; poseUntil = t + 2.4; nextPoseAt = t + 9 + Math.random() * 7; }
+      frame = t < poseUntil ? pose : ((t * .8) % 1 < .28 ? 1 : 0);
+    }
+  }
+  if (kid.naturalWidth) {
+    if (face < 0) { g.save(); g.translate(kx, 0); g.scale(-1, 1); g.drawImage(kid, frame * FRAME_W, 0, FRAME_W, FRAME_H, -ANCHOR_X, ky - ANCHOR_Y, FRAME_W, FRAME_H); g.restore(); }
+    else g.drawImage(kid, frame * FRAME_W, 0, FRAME_W, FRAME_H, kx - ANCHOR_X, ky - ANCHOR_Y, FRAME_W, FRAME_H);
+  }
+  if (!still) requestAnimationFrame(draw);
+}
+if (still) { let n = 0; const once = () => { if (++n === 2) requestAnimationFrame(draw); }; bg.addEventListener('load', once); kid.addEventListener('load', once); }
+else requestAnimationFrame(draw);
+}
+</script>
+</body>
+</html>
