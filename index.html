@@ -16,13 +16,17 @@
 *{box-sizing:border-box;margin:0}
 html,body{height:100%;background:#4a0f1a;overflow:hidden}
 .tag{position:absolute;z-index:2;transform:translate(-50%,-100%);font:16px/1.2 Silkscreen,monospace;color:#fff3dc;background:#2a0a12;border:3px solid #fff3dc;box-shadow:3px 3px 0 #120306;padding:6px 10px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .2s}
-.tag.on{opacity:1}.tag i{font-style:normal;color:#8ff0c8}.tag.bad i{color:#ff8a8a}
+.tag.on{opacity:1}
+.hud{position:absolute;left:14px;top:12px;z-index:2;font:16px Silkscreen,monospace;color:#fff3dc;text-shadow:2px 2px 0 #120306;pointer-events:none}
+.help{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);z-index:2;font:14px/1.4 Silkscreen,monospace;color:#fff3dc;background:#2a0a12;border:3px solid #fff3dc;padding:6px 10px;text-align:center;pointer-events:none;transition:opacity 1s;max-width:calc(100vw - 24px)}.tag i{font-style:normal;color:#8ff0c8}.tag.bad i{color:#ff8a8a}
 canvas{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);image-rendering:pixelated;image-rendering:crisp-edges;cursor:pointer;touch-action:manipulation}
 </style>
 </head>
 <body>
 <div class="tag" id="tag"></div>
-<canvas id="c" role="img" aria-label="A boy with a net flying through a scrolling tunnel inside the gut. Tap to swing the net."></canvas>
+<div class="hud" id="hud" aria-live="polite">Caught 0</div>
+<div class="help" id="help">Arrows or drag to fly · Space or tap to swing</div>
+<canvas id="c" role="img" aria-label="A boy with a net flying through a tunnel inside the gut. Use the arrow keys or drag to fly, and Space or tap to swing the net and catch floating foods."></canvas>
 <script>
 {
 const cv = document.getElementById('c'), g = cv.getContext('2d');
@@ -89,17 +93,42 @@ function showTag(f, px, py) {
   tag.className = 'tag' + (f.bad ? ' bad' : '');
   tag.innerHTML = '<span></span> <i></i>';
   tag.firstChild.textContent = f.name;
-  tag.lastChild.textContent = f.bad ? '✗ not for now' : '✓ safe';
+  tag.lastChild.textContent = f.caught ? '✓ caught!' : f.bad ? '✗ not for now' : '✓ safe';
   tag.style.left = Math.max(90, Math.min(innerWidth - 90, px)) + 'px';
   tag.style.top = Math.max(50, py - 12) + 'px';
   tag.classList.add('on'); clearTimeout(tagT); tagT = setTimeout(() => tag.classList.remove('on'), 2200);
 }
+/* player position (native pixels) and controls */
+let px = null, py = null, goal = null, drag = null, caught = 0;
+const keys = new Set();
+const toNative = e => { const r = cv.getBoundingClientRect(); return {x: (e.clientX - r.left) / k, y: (e.clientY - r.top) / k, r}; };
 cv.addEventListener('pointerdown', e => {
-  const r = cv.getBoundingClientRect(), nx = (e.clientX - r.left) / k, ny = (e.clientY - r.top) / k;
-  const hit = floats.find(f => nx > f.x - 3 && nx < f.x + 19 && ny > top + 82 && ny < top + 106);
-  if (hit) showTag(hit.f, r.left + (hit.x + 8) * k, r.top + (top + 86) * k);
-  else swing(performance.now());
+  cv.setPointerCapture(e.pointerId);
+  const n = toNative(e);
+  drag = {x0: e.clientX, y0: e.clientY, t0: performance.now(), moved: false};
+  goal = {x: n.x, y: n.y};
 });
+cv.addEventListener('pointermove', e => {
+  if (!drag) return;
+  if (Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) > 12) drag.moved = true;
+  const n = toNative(e); goal = {x: n.x, y: n.y};
+});
+cv.addEventListener('pointerup', e => {
+  if (drag && !drag.moved && performance.now() - drag.t0 < 300) {
+    goal = null;
+    const n = toNative(e);
+    const hit = floats.find(f => n.x > f.x - 3 && n.x < f.x + 19 && n.y > top + 82 && n.y < top + 106);
+    if (hit) showTag(hit.f, n.r.left + (hit.x + 8) * k, n.r.top + (top + 86) * k);
+    else swing(performance.now());
+  }
+  drag = null; goal = null;
+});
+addEventListener('keydown', e => { const kk = e.key.toLowerCase(); if (['arrowup','arrowdown','arrowleft','arrowright','w','a','s','d'].includes(kk)) { keys.add(kk); e.preventDefault(); } });
+addEventListener('keyup', e => keys.delete(e.key.toLowerCase()));
+addEventListener('blur', () => keys.clear());
+setTimeout(() => document.getElementById('help').style.opacity = 0, 7000);
+const hud = document.getElementById('hud');
+const pops = [];
 addEventListener('keydown', e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); swing(performance.now()); } });
 
 let start = performance.now(), lastT = 0;
@@ -140,8 +169,37 @@ function draw(now) {
     }
   }
 
-  const kx = Math.floor(W * .4), bob = still ? 0 : Math.round(Math.sin(t * 2.2) * 2);
-  const ky = top + 72 + bob;
+  if (px === null) { px = Math.floor(W * .4); py = top + 72; }
+  let vx = 0, vy = 0;
+  if (keys.has('arrowleft') || keys.has('a')) vx -= 1;
+  if (keys.has('arrowright') || keys.has('d')) vx += 1;
+  if (keys.has('arrowup') || keys.has('w')) vy -= 1;
+  if (keys.has('arrowdown') || keys.has('s')) vy += 1;
+  if (vx || vy) { const m = Math.hypot(vx, vy); px += vx / m * 70 * dt; py += vy / m * 70 * dt; }
+  else if (goal) { const gx = goal.x - 6, gy = goal.y, d = Math.hypot(gx - px, gy - py); if (d > 1) { const st = Math.min(d, 80 * dt); px += (gx - px) / d * st; py += (gy - py) / d * st; } }
+  px = Math.max(20, Math.min(W - 32, px)); py = Math.max(top + 36, Math.min(top + 92, py));
+  const bob = still ? 0 : Math.round(Math.sin(t * 2.2) * ((vx || vy || goal) ? 1 : 2));
+  const kx = Math.round(px), ky = Math.round(py) + bob;
+
+  /* catching with the net */
+  if (action === 2 && now < actionUntil) {
+    const nx0 = kx + 14, nx1 = kx + 30, ny0 = ky - 8, ny1 = ky + 10;
+    for (let i = floats.length - 1; i >= 0; i--) {
+      const o = floats[i], fy0 = top + 88, fy1 = top + 101;
+      if (o.x + 14 > nx0 && o.x + 2 < nx1 && fy1 > ny0 && fy0 < ny1) {
+        floats.splice(i, 1);
+        const r = cv.getBoundingClientRect();
+        if (o.f.bad) { showTag(o.f, r.left + (o.x + 8) * k, r.top + (top + 86) * k); pops.push({x: o.x + 8, y: top + 94, t, bad: true}); }
+        else { caught++; hud.textContent = 'Caught ' + caught; showTag({name: o.f.name + ' +1', bad: false, caught: true}, r.left + (o.x + 8) * k, r.top + (top + 86) * k); pops.push({x: o.x + 8, y: top + 94, t, bad: false}); }
+      }
+    }
+  }
+  for (let i = pops.length - 1; i >= 0; i--) {
+    const p = pops[i], a = t - p.t;
+    if (a > .6) { pops.splice(i, 1); continue; }
+    g.fillStyle = p.bad ? '#ff6a6a' : '#fff2a8';
+    for (let j = 0; j < 8; j++) { const an = j / 8 * Math.PI * 2, rr = 3 + a * 22; g.fillRect(Math.round(p.x + Math.cos(an) * rr), Math.round(p.y + Math.sin(an) * rr * .7), 1, 1); }
+  }
 
   if (!still) {
     g.fillStyle = 'rgba(255,235,210,.55)';
