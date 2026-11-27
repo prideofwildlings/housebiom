@@ -297,7 +297,7 @@ document.getElementById('closeBook').addEventListener('click', () => toggle(fals
 wrap.addEventListener('click', e => { if (e.target === wrap) toggle(false); });
 addEventListener('keydown', e => { if (e.key === 'Escape') { if (!picker.hidden) closePicker(); else toggle(false); } });
 /* floating him yourself: keys or drag; he drifts on his own when left alone */
-let px = null, py = null, goal = null, lastInput = -99, face = 1, pose = 0, poseUntil = 0, nextPoseAt = 8;
+let px = null, py = null, goal = null, lastInput = -99, face = 1, pose = 0, poseUntil = 0, nextPoseAt = 8, wander = null, wanderAt = 0, speed = 0;
 const keys = new Set();
 const toNative = e => { const r = cv.getBoundingClientRect(); return {x: (e.clientX - r.left) / k, y: (e.clientY - r.top) / k}; };
 cv.addEventListener('pointerdown', e => { toggle(false); cv.setPointerCapture(e.pointerId); goal = toNative(e); });
@@ -429,7 +429,7 @@ function draw(now) {
   const t = (now - start) / 1000, dt = Math.min(.05, t - lastT); lastT = t;
   g.fillStyle = topCol; g.fillRect(0, 0, W, top + 1);
   g.fillStyle = botCol; g.fillRect(0, top + BG_H - 1, W, H - top - BG_H + 1);
-  const scroll = still ? 0 : Math.floor(t * 14) % TILE_W;
+  const scroll = 0;
   if (bg.naturalWidth) for (let x = -scroll; x < W; x += TILE_W) g.drawImage(bg, x, top);
 
   if (!still) {
@@ -437,7 +437,7 @@ function draw(now) {
     for (const b of bubbles) {
       b.life += dt * .5;
       if (b.life > 1) { b.life = 0; b.x = Math.random() * TILE_W; }
-      const sx = ((b.x - t * 14) % TILE_W + TILE_W) % TILE_W;
+      const sx = b.x % TILE_W;
       if (b.life < .85) for (let x = sx; x < W; x += TILE_W) g.fillRect(Math.floor(x), top + 96 - Math.floor(b.life * 14), 1, 1);
     }
   }
@@ -466,24 +466,29 @@ function draw(now) {
     }
   }
 
-  /* the boy drifts on his own */
-  const ax = W * .4 + (still ? 0 : Math.sin(t * .23) * W * .08), ay = top + 56 + (still ? 0 : Math.sin(t * .41) * 6);
-  if (px === null) { px = ax; py = ay; }
+  /* he flies around the still room: you steer him, or he wanders on his own */
+  const minX = 26, maxX = W - 34, minY = top + 24, maxY = top + 68;
+  if (px === null) { px = W * .4; py = top + 54; }
+  const ox = px, oy = py;
   let vx = 0, vy = 0;
   if (keys.has('arrowleft') || keys.has('a')) vx -= 1;
   if (keys.has('arrowright') || keys.has('d')) vx += 1;
   if (keys.has('arrowup') || keys.has('w')) vy -= 1;
   if (keys.has('arrowdown') || keys.has('s')) vy += 1;
-  if (vx || vy) { const m = Math.hypot(vx, vy); px += vx / m * 60 * dt; py += vy / m * 60 * dt; lastInput = t; }
-  else if (goal) { const gx = goal.x - 6, gy = goal.y, d = Math.hypot(gx - px, gy - py); if (d > 1) { const st = Math.min(d, 70 * dt); px += (gx - px) / d * st; py += (gy - py) / d * st; } lastInput = t; }
-  else if (t - lastInput > 3) { const e = Math.min(1, dt * .8); px += (ax - px) * e; py += (ay - py) * e; }
-  px = Math.max(26, Math.min(W - 34, px)); py = Math.max(top + 24, Math.min(top + 68, py));
-  const moving = !!(vx || vy || (goal && Math.hypot(goal.x - 6 - px, goal.y - py) > 2));
-  if (vx) face = vx > 0 ? 1 : -1;
-  else if (goal && Math.abs(goal.x - 6 - px) > 3) face = goal.x - 6 > px ? 1 : -1;
-  else if (!moving && t - lastInput > 3) { const dx = ax - px; if (Math.abs(dx) > 2) face = dx > 0 ? 1 : -1; else face = 1; }
+  if (vx || vy) { const m = Math.hypot(vx, vy); px += vx / m * 60 * dt; py += vy / m * 60 * dt; lastInput = t; wander = null; }
+  else if (goal) { const gx = goal.x - 6, gy = goal.y, d = Math.hypot(gx - px, gy - py); if (d > 1) { const st = Math.min(d, 70 * dt); px += (gx - px) / d * st; py += (gy - py) / d * st; } lastInput = t; wander = null; }
+  else if (!still && t - lastInput > 3) {
+    if (!wander || t > wanderAt) { wander = {x: minX + Math.random() * (maxX - minX), y: minY + 6 + Math.random() * (maxY - minY - 12)}; wanderAt = t + 7 + Math.random() * 6; }
+    const dx = wander.x - px, dy = wander.y - py, d = Math.hypot(dx, dy);
+    if (d > 2) { const st = Math.min(d, Math.min(22, d * .9) * dt); px += dx / d * st; py += dy / d * st; }
+  }
+  px = Math.max(minX, Math.min(maxX, px)); py = Math.max(minY, Math.min(maxY, py));
+  const vxNow = dt ? (px - ox) / dt : 0;
+  speed = speed * .85 + (dt ? Math.hypot(px - ox, py - oy) / dt : 0) * .15;
+  const moving = speed > 6;
+  if (Math.abs(vxNow) > 4) face = vxNow > 0 ? 1 : -1;
   const kx = Math.round(px), ky = Math.round(py) + (still ? 0 : Math.round(Math.sin(t * 2.2) * 1.5));
-  if (!still) {
+  if (!still && speed > 30) {
     g.fillStyle = 'rgba(255,235,210,.55)';
     for (const l of lines) {
       l.t += dt * 1.2;
