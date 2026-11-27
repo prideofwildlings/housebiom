@@ -5,20 +5,18 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Housebiom</title>
 <link rel="artifact-thumbnail" href="thumb.jpg">
-<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&display=swap" rel="stylesheet">
 <style>
-/* VOICE: quiet, cozy, magical — a storybook page you can poke
+/* VOICE: quiet, cozy, magical
    IDEA: a painted theatre set inside the gut, built from stacked layers
-   PICTURE: the whole screen is the scene; nothing else
-   COLOUR and TYPE: the art's crimson, amber and teal; Fredoka for the few words
-   LAYOUT: full-bleed scene, tiny title, a hint that fades */
+   PICTURE: the whole screen is the scene
+   COLOUR and TYPE: the art's crimson, amber and teal; no text for now
+   LAYOUT: full-bleed scene only */
 :root{color-scheme:dark}
 *{box-sizing:border-box;margin:0}
 html,body{height:100%;background:#1a0508;overflow:hidden}
-body{font-family:Fredoka,system-ui,sans-serif;color:#fff3dc}
 .view{position:relative;width:100vw;height:100vh;height:100dvh;overflow:hidden}
 .scene{position:absolute;left:50%;top:50%;width:max(100vw,calc(100dvh*1672/941));aspect-ratio:1672/941;transform:translate(-51%,-50%);--px:0;--py:0}
-@media(max-aspect-ratio:1/1){.scene{transform:translate(-46%,-50%)}.view .note{left:var(--pl);top:var(--pt)}}
+@media(max-aspect-ratio:1/1){.scene{transform:translate(-55%,-50%)}}
 .layer{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;user-select:none}
 .glow{position:absolute;width:135%;aspect-ratio:1672/941;left:-31.85%;top:-23.9%;pointer-events:none;transform:translate(calc(var(--px)*6px),calc(var(--py)*4px))}
 .glowpulse{animation:breathe 7s ease-in-out infinite}
@@ -28,363 +26,28 @@ body{font-family:Fredoka,system-ui,sans-serif;color:#fff3dc}
 .frame{transform:translate(calc(var(--px)*34px),calc(var(--py)*18px)) scale(1.07)}
 .motes{position:absolute;inset:0;pointer-events:none}
 .motes i{position:absolute;width:5px;height:5px;border-radius:50%;background:#ffe2a6;box-shadow:0 0 8px 2px rgba(255,200,120,.6);opacity:0;animation:mote linear infinite}
-.raftpos{position:absolute;left:32%;bottom:16%;width:30%;aspect-ratio:1388/766;transform:translate(calc(var(--px)*22px),calc(var(--py)*10px))}
-.raft{position:absolute;inset:0;animation:bob 5s ease-in-out infinite;transform-origin:50% 90%}
-.raft>img{width:100%;height:100%;pointer-events:none}
-.lamp{position:absolute;left:28.5%;top:31.5%;width:60%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,rgba(255,226,150,.55),rgba(255,190,100,.18) 35%,transparent 70%);mix-blend-mode:screen;pointer-events:none;animation:flick 2.6s ease-in-out infinite}
-.warm{position:absolute;left:20%;top:40%;width:60%;height:70%;border-radius:50%;background:radial-gradient(ellipse,rgba(255,190,110,.18),transparent 65%);mix-blend-mode:screen;pointer-events:none;animation:flick 2.6s ease-in-out infinite}
-.mic{position:absolute;cursor:pointer;background:none;border:0;padding:0;font:inherit;-webkit-tap-highlight-color:transparent;transform:translate(-50%,-100%)}
-.mic .body{display:block;transform-origin:50% 100%;animation:waddle .9s ease-in-out infinite}
-.mic img{display:block;width:100%;pointer-events:none;filter:drop-shadow(0 6px 5px rgba(40,0,10,.45))}
-.mic.flip img{transform:scaleX(-1)}
-.mic.swim img{clip-path:inset(0 0 22% 0);filter:none}
-.mic.swim .body{animation:float 3s ease-in-out infinite}
-.mic.hop .body{animation:hop .6s ease-out}
-.mic:focus-visible{outline:3px solid #7fe3d0;outline-offset:4px;border-radius:12px}
-.bubble{position:absolute;z-index:5;max-width:min(260px,70vw);background:#fff3dc;color:#4a1420;padding:10px 14px;border-radius:16px;font-size:15px;line-height:1.3;transform:translate(-50%,-100%);box-shadow:0 10px 24px -8px rgba(0,0,0,.6);pointer-events:none;opacity:0;transition:opacity .3s}
-.bubble b{display:block;font-weight:600;font-size:17px;color:#b8323f}
-.bubble.on{opacity:1}
-.bubble::after{content:"";position:absolute;left:50%;bottom:-7px;width:14px;height:14px;background:#fff3dc;transform:translateX(-50%) rotate(45deg)}
-.title{position:absolute;left:max(18px,3vw);top:max(14px,2.5vh);font-weight:600;font-size:clamp(24px,3.4vw,40px);color:#ffe7bd;text-shadow:0 2px 12px rgba(60,0,10,.8);pointer-events:none}
-.hint{position:absolute;left:50%;bottom:96px;z-index:7;transform:translateX(-50%);font-size:16px;color:#ffe7bd;background:rgba(60,8,16,.55);padding:8px 16px;border-radius:999px;pointer-events:none;transition:opacity 1s;white-space:nowrap}
-
-.keeper{position:absolute;left:21%;width:58%;bottom:18%;pointer-events:none}
-.keeper img{display:block;width:100%}
-.keeper.stamp{animation:stamp .5s ease-out}
-.anchor{position:absolute;width:1px;height:1px;pointer-events:none}
-.note{position:absolute;left:var(--l);top:var(--t);background:none;border:0;padding:0;cursor:pointer;transform-origin:50% 6%;animation:sway 6s ease-in-out infinite;-webkit-tap-highlight-color:transparent}
-.note img{display:block;width:100%;filter:drop-shadow(0 8px 6px rgba(50,0,10,.5))}
-.note:hover img{filter:drop-shadow(0 10px 10px rgba(50,0,10,.6)) brightness(1.06)}
-.note:focus-visible{outline:3px solid #7fe3d0;outline-offset:3px}
-.note .count{position:absolute;right:-6%;top:-4%;min-width:26px;height:26px;padding:0 6px;border-radius:13px;background:#b8323f;color:#fff3dc;font-size:14px;line-height:26px;text-align:center}
-.note .count:empty{display:none}
-.food{position:absolute;z-index:6;pointer-events:none;transform:translate(-50%,-60%);will-change:left,top,width,opacity}
-.food img{display:block;width:100%;filter:drop-shadow(0 6px 6px rgba(20,0,5,.45))}
-.tray{position:absolute;left:0;right:0;bottom:0;z-index:8;display:flex;align-items:center;gap:10px;padding:10px max(12px,2vw) max(10px,env(safe-area-inset-bottom));background:linear-gradient(to top,rgba(30,4,10,.92),rgba(30,4,10,.6) 70%,transparent);overflow-x:auto;scrollbar-width:none}
-.tray::-webkit-scrollbar{display:none}
-.tray .lab{flex:none;color:#ffe7bd;font-size:16px;padding-right:4px;white-space:nowrap}
-.tray button{flex:none;width:62px;height:62px;border-radius:16px;border:1px solid rgba(255,220,170,.25);background:rgba(255,243,220,.1);cursor:pointer;padding:6px;transition:transform .15s,background .15s}
-.tray button:hover{background:rgba(255,243,220,.22);transform:translateY(-3px)}
-.tray button:focus-visible{outline:3px solid #7fe3d0;outline-offset:2px}
-.tray button img{width:100%;height:100%;object-fit:contain;pointer-events:none}
-.tray button:disabled{opacity:.4;cursor:default;transform:none}
-.card{position:absolute;z-index:9;left:50%;bottom:104px;transform:translate(-50%,20px);width:min(360px,calc(100vw - 32px));background:#fff3dc;color:#4a1420;border-radius:22px;padding:16px;box-shadow:0 20px 40px -12px rgba(0,0,0,.7);display:flex;gap:14px;align-items:center;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s}
-.card.on{opacity:1;pointer-events:auto;transform:translate(-50%,0)}
-.card img{width:64px;height:64px;object-fit:contain;flex:none}
-.card .q{flex:1}
-.card .q b{display:block;font-size:19px;font-weight:600;color:#b8323f}
-.card .q span{font-size:15px}
-.card .btns{display:flex;gap:8px;margin-top:10px}
-.card .btns button{flex:1;min-height:44px;border-radius:14px;border:0;font:inherit;font-size:16px;font-weight:600;cursor:pointer}
-.yes{background:#3f8f5a;color:#fff}.no{background:#e9d3c0;color:#7a2030}
-.yes:focus-visible,.no:focus-visible{outline:3px solid #4a1420;outline-offset:2px}
-.book{position:absolute;inset:0;z-index:12;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(20,2,6,.55);opacity:0;pointer-events:none;transition:opacity .3s}
-.book.on{opacity:1;pointer-events:auto}
-.paper{position:relative;width:min(440px,100%);max-height:min(560px,calc(100dvh - 32px));overflow:auto;background:#f6ead2;color:#3a1218;border-radius:6px;padding:26px 26px 22px;box-shadow:0 30px 60px -20px #000;transform:rotate(-1deg)}
-.paper h2{font-size:24px;font-weight:600;margin-bottom:4px;color:#7a2030}
-.paper .sub{font-size:15px;color:#7a5a50;margin-bottom:14px}
-.paper ul{list-style:none;padding:0;margin:0}
-.paper li{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px dashed #d8c2a4;font-size:16px}
-.paper li img{width:34px;height:34px;object-fit:contain}
-.paper li span{flex:1}
-.paper li time{font-size:14px;color:#7a5a50}
-.paper li button{background:none;border:0;font-size:20px;color:#9a6a60;cursor:pointer;min-width:36px;min-height:36px}
-.paper .empty{font-style:italic;color:#7a5a50;padding:10px 0}
-.paper .close{position:absolute;right:10px;top:8px;background:none;border:0;font-size:28px;color:#7a2030;cursor:pointer;min-width:44px;min-height:44px}
-.paper .big{font-size:48px;font-weight:600;color:#3f8f5a;line-height:1}
-.days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin-top:10px;text-align:center;font-size:13px}
-.days div{background:#efdcbc;border-radius:8px;padding:6px 2px}
-.days b{display:block;font-size:16px;font-weight:600}
-.days .ok{color:#3f8f5a}.days .x{color:#b8323f}
-.save{font-size:13px;color:#7a5a50;margin-top:14px}
-@keyframes sway{50%{transform:rotate(2.5deg)}}
-@keyframes stamp{30%{transform:translateY(2%) scale(1.01,.98)}}
 @keyframes breathe{50%{transform:scale(1.04);filter:brightness(1.12)}}
-@keyframes bob{50%{transform:translateY(-1.2%) rotate(-.8deg)}}
-@keyframes flick{0%,100%{opacity:1}40%{opacity:.78}60%{opacity:.92}}
-@keyframes waddle{50%{transform:translateY(-3%) rotate(2deg)}}
-@keyframes float{50%{transform:translateY(-8%)}}
-@keyframes hop{30%{transform:translateY(-35%) scale(.95,1.08)}60%{transform:translateY(0) scale(1.1,.9)}}
 @keyframes shim{to{background-position:0 22px}}
 @keyframes mote{0%{opacity:0;transform:translate(0,0)}15%{opacity:.8}100%{opacity:0;transform:translate(var(--dx),-180px)}}
-@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important}}
 </style>
 </head>
 <body>
-<div class="view" id="view">
+<div class="view" id="view" role="img" aria-label="A glowing tunnel inside the gut with a teal river">
   <div class="scene" id="scene">
     <div class="glow"><img class="layer glowpulse" src="assets/glow.webp" alt=""></div>
     <img class="layer walls" src="assets/walls.webp" alt="">
     <div class="motes" id="motes"></div>
     <img class="layer water" src="assets/water.webp" alt="">
     <div class="shimmer"></div>
-    <div class="warm"></div>
-    <div id="swimmers"></div>
-    <div class="raftpos"><div class="raft" id="raft"><img src="assets/raft.webp" alt="A small raft home with a lantern"><div class="lamp"></div><div class="keeper" id="keeper"><img src="assets/keeper.webp" alt="The keeper at the table, sorting what comes in"><div class="anchor" id="aYes" style="left:72.8%;top:44%"></div><div class="anchor" id="aNo" style="left:88%;top:44%"></div></div><div class="anchor" id="aDock" style="left:62%;top:92%"></div></div></div>
-    <div class="anchor" id="aMouth" style="left:61%;top:58%"></div>
-    <div id="notes"></div>
     <img class="layer frame" src="assets/frame.webp" alt="">
   </div>
-  <div class="bubble" id="bubble" role="status"></div>
-  <div class="title">Housebiom</div>
-  <div class="hint" id="hint">Send down what you ate. The keeper decides.</div>
-  <div class="tray" id="tray" aria-label="What came in?"><span class="lab">What came in?</span></div>
-  <div class="card" id="card" role="dialog" aria-label="The keeper asks"><img id="cardImg" alt=""><div class="q"><b id="cardName"></b><span id="cardSay"></span><div class="btns"><button class="yes" id="yes" type="button">Let it in</button><button class="no" id="no" type="button">Not today</button></div></div></div>
-  <div class="book" id="book"><div class="paper" role="dialog" aria-modal="true" aria-labelledby="bookTitle"><button class="close" id="close" type="button" aria-label="Close">×</button><div id="bookBody"></div></div></div>
 </div>
-
 <script>
 {
-const $ = id => document.getElementById(id);
-const scene = $('scene'), view = $('view'), bubble = $('bubble');
+const scene = document.getElementById('scene'), view = document.getElementById('view');
 const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-const FOODS = [
-  {n:'Date', k:'good'}, {n:'Lentils', k:'good'}, {n:'Laban', k:'good'}, {n:'Apple', k:'good'},
-  {n:'Carrot', k:'good'}, {n:'Bread', k:'ok'}, {n:'Fish', k:'ok'}, {n:'Pickles', k:'good'},
-  {n:'Soda', k:'treat'}, {n:'Candy', k:'treat'}, {n:'Donut', k:'treat'}, {n:'Tea', k:'ok'}
-];
-const ASK = {good:'Fiber and friends! The microbes are already waving.', ok:'A steady, ordinary guest. Let it in?', treat:'Hmm, a sweet one. Your call.'};
-const AFTER = {
-  in:{good:'Welcome in! Bifi is thrilled.', ok:'Noted and filed.', treat:'Fine… just this once. Noted.'},
-  out:{good:'Turning away a good one? Noted anyway.', ok:'Maybe another day.', treat:'Not today, friend. Off you float.'}
-};
-
-const MICROBES = [
-  {img:0, name:'Lacto', line:'I turn milk into laban. Sour is my superpower.', faces:'left', home:'water', y:.66, size:.05, x:.24},
-  {img:1, name:'Cocco', line:'Round, rolling, and very proud of it.', faces:'none', home:'raft', size:.15, x:.22, min:.12, max:.3},
-  {img:2, name:'Strepto', line:'We travel in a chain, like a family on a walk.', faces:'left', home:'water', y:.76, size:.075, x:.32},
-  {img:3, name:'Spiro', line:'I spin when I\'m happy. I\'m always spinning.', faces:'left', home:'water', y:.74, size:.065, x:.74},
-  {img:4, name:'Zoom', line:'My tail is a tiny motor. Wanna race?', faces:'left', home:'water', y:.80, size:.075, x:.2},
-  {img:5, name:'Phage', line:'Technically a virus. Here I just keep the peace.', faces:'none', home:'water', y:.615, size:.035, x:.6},
-  {img:6, name:'Bifi', line:'Fiber is my favourite snack. Send more lentils.', faces:'left', home:'raft', size:.15, x:.8, min:.72, max:.88},
-  {img:7, name:'Akker', line:'I live in the soft lining of these walls. Very cozy.', faces:'none', home:'water', y:.69, size:.055, x:.82}
-];
-
-/* ---------- microbes ---------- */
-const swimLayer = $('swimmers'), raft = $('raft');
-const agents = MICROBES.map((m, i) => {
-  const el = document.createElement('button');
-  el.type = 'button';
-  el.className = 'mic' + (m.home === 'water' ? ' swim' : '');
-  el.setAttribute('aria-label', m.name);
-  el.innerHTML = '<span class="body"><img alt=""></span>';
-  el.querySelector('img').src = `assets/m${m.img}.webp`;
-  el.querySelector('.body').style.animationDelay = (-i * .37) + 's';
-  const a = {m, el, x:m.x, dir: Math.random() < .5 ? -1 : 1, pause: Math.random() * 3};
-  el.style.width = (m.size * 100) + '%';
-  if (m.home === 'raft') {
-    a.min = m.min; a.max = m.max; a.speed = .03;
-    el.style.top = '88%'; el.style.zIndex = 3;
-    raft.appendChild(el);
-  } else {
-    a.min = .12; a.max = .88; a.speed = .012 + m.size * .15;
-    el.style.top = (m.y * 100) + '%';
-    el.style.zIndex = Math.round(m.y * 100);
-    swimLayer.appendChild(el);
-  }
-  el.addEventListener('click', () => { hop(a); speak(a.el, a.m.name, a.m.line); a.talking = true; setTimeout(() => a.talking = false, 4200); });
-  return a;
-});
-function place(a) {
-  a.el.style.left = (a.x * 100) + '%';
-  a.el.classList.toggle('flip', a.m.faces === 'left' && a.dir > 0);
-}
-agents.forEach(place);
-function hop(a) { a.el.classList.remove('hop'); void a.el.offsetWidth; a.el.classList.add('hop'); }
-
-let last = performance.now();
-function tick(now) {
-  const dt = Math.min(.05, (now - last) / 1000); last = now;
-  for (const a of agents) {
-    if (a.talking) continue;
-    if (a.pause > 0) { a.pause -= dt; continue; }
-    a.x += a.dir * a.speed * dt;
-    if (a.x < a.min || a.x > a.max) { a.dir *= -1; a.x = Math.max(a.min, Math.min(a.max, a.x)); }
-    if (Math.random() < dt * .25) a.pause = 1 + Math.random() * 3;
-    if (Math.random() < dt * .08) a.dir *= -1;
-    place(a);
-  }
-  requestAnimationFrame(tick);
-}
-if (!still) requestAnimationFrame(tick);
-
-/* ---------- speech bubble ---------- */
-let talkT;
-function speak(el, title, text) {
-  bubble.innerHTML = '<b></b><span></span>';
-  bubble.querySelector('b').textContent = title;
-  bubble.querySelector('span').textContent = text;
-  const r = el.getBoundingClientRect(), v = view.getBoundingClientRect();
-  bubble.style.left = Math.max(140, Math.min(v.width - 140, r.left + r.width / 2 - v.left)) + 'px';
-  bubble.style.top = Math.max(110, r.top - v.top - 8) + 'px';
-  bubble.classList.add('on');
-  $('hint').style.opacity = 0;
-  clearTimeout(talkT);
-  talkT = setTimeout(() => bubble.classList.remove('on'), 4200);
-}
-
-/* ---------- records ---------- */
-let entries = [], col = null;
-const valid = d => d && Number.isInteger(d.food) && d.food >= 0 && d.food < FOODS.length && (d.v === 'in' || d.v === 'out') && typeof d.t === 'number';
-const sameDay = (a, b) => new Date(a).toDateString() === new Date(b).toDateString();
-const today = () => entries.filter(e => sameDay(e.t, Date.now()));
-
-async function record(food, v) {
-  const e = {t: Date.now(), food, v};
-  const id = 'e' + e.t.toString(36) + Math.random().toString(36).slice(2, 6);
-  entries = [{id, ...e}, ...entries];
-  refresh();
-  if (col) { try { await col.doc(id).set(e); } catch (err) {} }
-}
-async function remove(id) {
-  entries = entries.filter(e => e.id !== id);
-  refresh();
-  if (col) { try { await col.doc(id).delete(); } catch (err) {} }
-}
-
-(async () => {
-  try {
-    if (!window.claude || !claude.use) return;
-    const [db, user] = await Promise.all([claude.use('db'), claude.use('user')]);
-    const uid = user && await user.id();
-    if (!db || !uid) return;
-    col = db.collection('data/users/' + uid);
-    col.orderBy('t', 'desc').limit(500).onSnapshot(snap => {
-      entries = snap.docs.map(d => ({id: d.id, ...d.data()})).filter(valid);
-      refresh();
-    }, () => {});
-  } catch (e) {}
-})();
-
-/* ---------- notes on the wall ---------- */
-const NOTES = [
-  {key:'in', img:3, left:15, top:21, w:6.2, pl:34.5, pt:13, label:'Let in today'},
-  {key:'out', img:7, left:25, top:31, w:6.4, pl:40.5, pt:23, label:'Turned away today'},
-  {key:'mood', img:5, left:76.5, top:19, w:6.2, pl:46, pt:12, label:'Microbe mood'},
-  {key:'week', img:2, left:72, top:33, w:8.4, pl:51.5, pt:17, label:'This week'}
-];
-$('notes').innerHTML = NOTES.map((n, i) => `<button class="note" type="button" data-k="${n.key}" aria-label="${n.label}" style="--l:${n.left}%;--t:${n.top}%;--pl:${n.pl}%;--pt:${n.pt}%;width:${n.w}%;animation-delay:${-i * 1.7}s"><img src="assets/n${n.img}.webp" alt=""><span class="count"></span></button>`).join('');
-$('notes').addEventListener('click', e => { const b = e.target.closest('.note'); if (b) openBook(b.dataset.k); });
-
-function refresh() {
-  const t = today();
-  const set = (k, n) => { const c = document.querySelector(`.note[data-k=${k}] .count`); if (c) c.textContent = n ? String(n) : ''; };
-  set('in', t.filter(e => e.v === 'in').length);
-  set('out', t.filter(e => e.v === 'out').length);
-  if (openKind) renderBook();
-}
-
-/* ---------- the keeper's notebook ---------- */
-let openKind = null, lastFocus = null;
-const fmtTime = t => new Date(t).toLocaleTimeString(undefined, {hour:'numeric', minute:'2-digit'});
-function listHTML(list) {
-  if (!list.length) return '<p class="empty">Nothing yet.</p>';
-  return '<ul>' + list.map(e => `<li><img src="assets/f${e.food}.webp" alt=""><span>${FOODS[e.food].n}</span><time>${fmtTime(e.t)}</time><button type="button" data-del="${encodeURIComponent(e.id)}" aria-label="Remove ${FOODS[e.food].n}">×</button></li>`).join('') + '</ul>';
-}
-function renderBook() {
-  const t = today(), k = openKind;
-  let h = '';
-  if (k === 'in') h = `<h2 id="bookTitle">Let in today</h2><p class="sub">Everything the keeper welcomed.</p>${listHTML(t.filter(e => e.v === 'in'))}`;
-  if (k === 'out') h = `<h2 id="bookTitle">Turned away today</h2><p class="sub">Floated past, not invited.</p>${listHTML(t.filter(e => e.v === 'out'))}`;
-  if (k === 'mood') {
-    const ins = t.filter(e => e.v === 'in');
-    const good = ins.filter(e => FOODS[e.food].k === 'good').length, treats = ins.filter(e => FOODS[e.food].k === 'treat').length;
-    const mood = !ins.length ? 'Sleepy. Nothing to eat yet.' : good >= 3 && good > treats ? 'Thriving! Everyone is fed.' : treats > good ? 'A little sugar-rushed.' : 'Content and cozy.';
-    h = `<h2 id="bookTitle">Microbe mood</h2><p class="sub">How the neighbours feel today.</p><p class="big">${mood}</p><ul style="margin-top:14px"><li><span>Good food let in</span><b>${good}</b></li><li><span>Treats let in</span><b>${treats}</b></li><li><span>Turned away</span><b>${t.filter(e => e.v === 'out').length}</b></li></ul>`;
-  }
-  if (k === 'week') {
-    let cells = '';
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date(); d.setHours(12, 0, 0, 0); d.setDate(d.getDate() - i);
-      const day = entries.filter(e => sameDay(e.t, d));
-      cells += `<div>${d.toLocaleDateString(undefined, {weekday:'short'})}<b class="ok">${day.filter(e => e.v === 'in').length}</b><b class="x">${day.filter(e => e.v === 'out').length}</b></div>`;
-    }
-    const kinds = new Set(entries.filter(e => e.v === 'in' && Date.now() - e.t < 7 * 864e5).map(e => e.food)).size;
-    h = `<h2 id="bookTitle">This week</h2><p class="sub">Green: let in. Red: turned away.</p><div class="days">${cells}</div><p class="sub" style="margin-top:14px">${kinds} different ${kinds === 1 ? 'food' : 'foods'} welcomed this week.</p>`;
-  }
-  h += `<p class="save">${col ? 'The keeper keeps these notes for you.' : 'In this preview the notes are not saved yet.'}</p>`;
-  $('bookBody').innerHTML = h;
-}
-function openBook(k) {
-  openKind = k; lastFocus = document.activeElement;
-  renderBook(); $('book').classList.add('on'); $('close').focus();
-}
-function closeBook() {
-  openKind = null; $('book').classList.remove('on');
-  if (lastFocus && lastFocus.focus) lastFocus.focus();
-}
-$('close').addEventListener('click', closeBook);
-$('book').addEventListener('click', e => {
-  if (e.target === $('book')) return closeBook();
-  const d = e.target.closest('[data-del]');
-  if (d) remove(decodeURIComponent(d.dataset.del));
-});
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && openKind) closeBook(); });
-
-/* ---------- sending food down the river ---------- */
-const tray = $('tray');
-tray.insertAdjacentHTML('beforeend', FOODS.map((f, i) => `<button type="button" data-f="${i}" aria-label="${f.n}"><img src="assets/f${i}.webp" alt=""></button>`).join(''));
-let busy = false, current = null;
-const center = id => { const r = $(id).getBoundingClientRect(), v = view.getBoundingClientRect(); return {x: r.left - v.left, y: r.top - v.top}; };
-const sceneW = () => scene.getBoundingClientRect().width;
-const ease = t => t < .5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2;
-function fly(el, from, to, ms, w0, w1, o0, o1, wob) {
-  return new Promise(res => {
-    const t0 = performance.now(), dur = still ? 1 : ms;
-    const step = now => {
-      const p = Math.min(1, (now - t0) / dur), e = ease(p), a = from(), b = to();
-      el.style.left = (a.x + (b.x - a.x) * e) + 'px';
-      el.style.top = (a.y + (b.y - a.y) * e + Math.sin(p * Math.PI * 4) * wob) + 'px';
-      el.style.width = (w0 + (w1 - w0) * e) * sceneW() + 'px';
-      el.style.opacity = o0 + (o1 - o0) * e;
-      p < 1 ? requestAnimationFrame(step) : res();
-    };
-    requestAnimationFrame(step);
-  });
-}
-function setTray(on) { tray.querySelectorAll('button').forEach(b => b.disabled = !on); }
-
-tray.addEventListener('click', async e => {
-  const b = e.target.closest('button[data-f]');
-  if (!b || busy) return;
-  busy = true; setTray(false); $('hint').style.opacity = 0;
-  const i = +b.dataset.f;
-  const el = document.createElement('div');
-  el.className = 'food'; el.innerHTML = `<img src="assets/f${i}.webp" alt="">`;
-  view.appendChild(el);
-  current = {i, el};
-  await fly(el, () => center('aMouth'), () => center('aDock'), 3400, .018, .06, .2, 1, 3);
-  $('cardImg').src = `assets/f${i}.webp`;
-  $('cardName').textContent = FOODS[i].n;
-  $('cardSay').textContent = ASK[FOODS[i].k];
-  $('card').classList.add('on');
-  $('yes').focus();
-});
-
-async function decide(v) {
-  if (!current) return;
-  const {i, el} = current; current = null;
-  $('card').classList.remove('on');
-  const dock = center('aDock');
-  if (v === 'in') {
-    await fly(el, () => dock, () => center('aYes'), 800, .06, .025, 1, .9, 0);
-    el.remove();
-    const k = $('keeper'); k.classList.remove('stamp'); void k.offsetWidth; k.classList.add('stamp');
-    agents.filter(a => a.m.home === 'raft').forEach(hop);
-  } else {
-    await fly(el, () => dock, () => ({x: dock.x + sceneW() * .45, y: dock.y + 30}), 2200, .06, .05, 1, 0, 4);
-    el.remove();
-  }
-  record(i, v);
-  speak($('keeper'), 'The keeper', AFTER[v][FOODS[i].k]);
-  busy = false; setTray(true);
-}
-$('yes').addEventListener('click', () => decide('in'));
-$('no').addEventListener('click', () => decide('out'));
-
-/* ---------- motes & parallax ---------- */
-const motes = $('motes');
+const motes = document.getElementById('motes');
 for (let i = 0; i < 16; i++) {
   const d = document.createElement('i');
   d.style.left = (40 + Math.random() * 40) + '%';
@@ -411,8 +74,6 @@ function drift(t) {
   requestAnimationFrame(drift);
 }
 if (!still) requestAnimationFrame(drift);
-setTimeout(() => { $('hint').style.opacity = 0; }, 10000);
-refresh();
 }
 </script>
 </body>
