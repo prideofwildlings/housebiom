@@ -20,9 +20,11 @@ canvas{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);image-r
 .journal button{font:inherit;color:#fff3dc;background:#2a0a12;border:3px solid #fff3dc;box-shadow:2px 2px 0 #120306;padding:5px 10px;cursor:pointer;display:flex;align-items:center;gap:8px;min-height:40px}
 .journal button b{color:#ffe17a;font-weight:normal}
 .journal button:focus-visible{outline:3px solid #8ff0c8;outline-offset:2px}
-.strength{display:flex;align-items:center;gap:8px;text-shadow:2px 2px 0 #120306;font-size:13px}
+.strength{position:absolute;left:50%;bottom:max(16px,env(safe-area-inset-bottom));transform:translateX(-50%);z-index:2;display:flex;align-items:center;gap:8px;font:13px Silkscreen,monospace;color:#fff3dc;text-shadow:2px 2px 0 #120306;white-space:nowrap;max-width:calc(100vw - 16px)}
+.strength b{font-weight:normal;color:#ffe17a}
+@media(max-width:480px){.strength>span:first-child{display:none}}
 .segs{display:flex;gap:2px;padding:3px;background:#2a0a12;border:3px solid #fff3dc;box-shadow:2px 2px 0 #120306}
-.segs i{width:10px;height:14px;background:#4a1a22;position:relative;overflow:hidden}
+.segs i{width:clamp(4px,calc((100vw - 170px) / 46),10px);height:14px;background:#4a1a22;position:relative;overflow:hidden}
 .segs i.on{background:linear-gradient(#fff3a8 0 3px,#ffd34a 3px 10px,#e0a020 10px)}
 .segs i.on::after{content:"";position:absolute;inset:0;background:rgba(255,255,255,.75);opacity:0;animation:glint 4s steps(1) infinite;animation-delay:calc(var(--i) * 70ms)}
 @keyframes glint{0%{opacity:.9}6%{opacity:0}}
@@ -36,16 +38,16 @@ canvas{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);image-r
 .page li img{width:32px;height:32px;image-rendering:pixelated}
 .page li span{flex:1}
 .page li i{font-style:normal;color:#3f8f5a}
-.help{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);z-index:2;font:14px/1.4 Silkscreen,monospace;color:#fff3dc;background:#2a0a12;border:3px solid #fff3dc;padding:6px 10px;text-align:center;pointer-events:none;transition:opacity 1s;max-width:calc(100vw - 24px)}
+.help{position:absolute;left:50%;bottom:64px;transform:translateX(-50%);z-index:2;font:14px/1.4 Silkscreen,monospace;color:#fff3dc;background:#2a0a12;border:3px solid #fff3dc;padding:6px 10px;text-align:center;pointer-events:none;transition:opacity 1s;max-width:calc(100vw - 24px)}
 canvas{touch-action:none;cursor:grab}
 </style>
 </head>
 <body>
 <div class="journal">
   <button type="button" id="journalBtn" aria-expanded="false" aria-controls="page">Journal <b id="count">0</b> foods ▾</button>
-  <div class="strength" role="img" id="strength"><span>Strength</span><div class="segs" id="segs"></div></div>
   <div class="page" id="page" hidden><h2>Logged in successfully</h2><ul id="list"></ul></div>
 </div>
+<div class="strength" role="img" id="strength"><span>Strength</span><div class="segs" id="segs"></div><span><b id="segCount"></b></span></div>
 <div class="help" id="help">Arrow keys or drag to float</div>
 <canvas id="c" role="img" aria-label="A boy with a net floats through a tunnel inside the gut while his safe foods drift by on the stream, glowing gold. Use the arrow keys or drag to float him around."></canvas>
 <script>
@@ -94,13 +96,14 @@ FOODS.forEach(f => { f.img.onload = () => makeAura(f); });
 /* journal */
 const btn = document.getElementById('journalBtn'), page = document.getElementById('page'), list = document.getElementById('list');
 document.getElementById('count').textContent = FOODS.length;
-const SEGMENTS = 14, segs = document.getElementById('segs');
+const SEGMENTS = 40, segs = document.getElementById('segs');
 for (let i = 0; i < SEGMENTS; i++) {
   const el = document.createElement('i'), f = FOODS[i];
   el.style.setProperty('--i', i);
   if (f) { el.className = 'on'; el.title = f.name; }
   segs.appendChild(el);
 }
+document.getElementById('segCount').textContent = `${Math.min(FOODS.length, SEGMENTS)} / ${SEGMENTS}`;
 document.getElementById('strength').setAttribute('aria-label', `Strength: ${Math.min(FOODS.length, SEGMENTS)} of ${SEGMENTS} foods logged successfully`);
 for (const f of FOODS) {
   const li = document.createElement('li');
