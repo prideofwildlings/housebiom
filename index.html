@@ -20,6 +20,28 @@ canvas{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);image-r
 .journal button{font:inherit;color:#fff3dc;background:#2a0a12;border:3px solid #fff3dc;box-shadow:2px 2px 0 #120306;padding:5px 10px;cursor:pointer;display:flex;align-items:center;gap:8px;min-height:40px}
 .journal button b{color:#ffe17a;font-weight:normal}
 .journal button:focus-visible{outline:3px solid #8ff0c8;outline-offset:2px}
+.book-wrap{position:absolute;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(20,2,6,.6);opacity:0;pointer-events:none;transition:opacity .25s}
+.book-wrap.on{opacity:1;pointer-events:auto}
+.book{position:relative;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:min(860px,100%);max-height:calc(100dvh - 32px);background:#6b3a22;border:4px solid #2a120a;box-shadow:6px 6px 0 #120306,inset 0 0 0 4px #8f5230;padding:14px;perspective:1600px;font:14px/1.3 Silkscreen,monospace;color:#3a1a14}
+.leaf{background:#f3e6c8;background-image:repeating-linear-gradient(#f3e6c8 0 23px,#e6d4ae 23px 24px);padding:18px 18px 22px;overflow:auto;min-height:0;box-shadow:inset 0 0 0 3px #e0caa0;transform-style:preserve-3d;transition:transform .55s cubic-bezier(.2,.7,.2,1),opacity .55s}
+.leaf.l{transform-origin:right center;box-shadow:inset -18px 0 22px -14px rgba(60,20,10,.45),inset 0 0 0 3px #e0caa0}
+.leaf.r{transform-origin:left center;box-shadow:inset 18px 0 22px -14px rgba(60,20,10,.45),inset 0 0 0 3px #e0caa0}
+.book-wrap:not(.on) .leaf.l{transform:rotateY(80deg);opacity:0}
+.book-wrap:not(.on) .leaf.r{transform:rotateY(-80deg);opacity:0}
+.leaf h2{font:inherit;font-size:18px;margin:0 0 12px;display:flex;align-items:center;gap:8px}
+.leaf.l h2{color:#2f7a48}.leaf.r h2{color:#a4263a}
+.leaf p{margin:0 0 12px;font-size:13px;color:#7a5a44}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:8px}
+.cell{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border:3px solid #c9ad7c;background:#fbf3df;text-align:center;font-size:12px;line-height:1.1;padding:4px;color:#3a1a14}
+.cell img{width:32px;height:32px;image-rendering:pixelated}
+.leaf.l .cell.on{border-color:#5cae74;background:#eef8e6}
+.leaf.r .cell.on{border-color:#d0606e;background:#fbe8e6}
+.leaf.r .cell.on img{filter:saturate(.55) brightness(.85)}
+.cell.empty{border-style:dashed;background:transparent;opacity:.55}
+.close{position:absolute;right:-14px;top:-14px;width:44px;height:44px;border:3px solid #fff3dc;background:#2a0a12;color:#fff3dc;font:20px Silkscreen,monospace;cursor:pointer;box-shadow:2px 2px 0 #120306}
+.close:focus-visible{outline:3px solid #8ff0c8;outline-offset:2px}
+@media(max-width:620px){.book{grid-template-columns:minmax(0,1fr);overflow:auto}.leaf.l{transform-origin:center bottom}.leaf.r{transform-origin:center top}.book-wrap:not(.on) .leaf.l{transform:rotateX(-80deg)}.book-wrap:not(.on) .leaf.r{transform:rotateX(80deg)}.close{right:-6px;top:-6px}}
+@media(prefers-reduced-motion:reduce){.leaf{transition:none}}
 .strength{position:absolute;left:50%;bottom:max(16px,env(safe-area-inset-bottom));transform:translateX(-50%);z-index:2;display:flex;align-items:center;gap:8px;font:13px Silkscreen,monospace;color:#fff3dc;text-shadow:2px 2px 0 #120306;white-space:nowrap;max-width:calc(100vw - 16px)}
 .strength b{font-weight:normal;color:#ffe17a}
 @media(max-width:480px){.strength>span:first-child{display:none}}
@@ -29,23 +51,20 @@ canvas{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);image-r
 .segs i.on::after{content:"";position:absolute;inset:0;background:rgba(255,255,255,.75);opacity:0;animation:glint 4s steps(1) infinite;animation-delay:calc(var(--i) * 70ms)}
 @keyframes glint{0%{opacity:.9}6%{opacity:0}}
 @media(prefers-reduced-motion:reduce){.segs i.on::after{animation:none}}
-.page{background:#f3e6c8;color:#3a1a14;border:3px solid #fff3dc;box-shadow:3px 3px 0 #120306;padding:10px 12px;max-height:min(420px,70vh);overflow:auto;min-width:230px}
-.page[hidden]{display:none}
-.page h2{font:inherit;font-size:15px;color:#7a2030;margin-bottom:6px}
-.page ul{list-style:none;margin:0;padding:0}
-.page li{display:flex;align-items:center;gap:10px;padding:3px 0;border-bottom:2px dashed rgba(58,26,20,.18)}
-.page li:last-child{border-bottom:0}
-.page li img{width:32px;height:32px;image-rendering:pixelated}
-.page li span{flex:1}
-.page li i{font-style:normal;color:#3f8f5a}
 .help{position:absolute;left:50%;bottom:64px;transform:translateX(-50%);z-index:2;font:14px/1.4 Silkscreen,monospace;color:#fff3dc;background:#2a0a12;border:3px solid #fff3dc;padding:6px 10px;text-align:center;pointer-events:none;transition:opacity 1s;max-width:calc(100vw - 24px)}
 canvas{touch-action:none;cursor:grab}
 </style>
 </head>
 <body>
 <div class="journal">
-  <button type="button" id="journalBtn" aria-expanded="false" aria-controls="page">Journal <b id="count">0</b> foods ▾</button>
-  <div class="page" id="page" hidden><h2>Logged in successfully</h2><ul id="list"></ul></div>
+  <button type="button" id="journalBtn" aria-haspopup="dialog">Open journal <b id="count">0</b></button>
+</div>
+<div class="book-wrap" id="bookWrap" aria-hidden="true">
+  <div class="book" role="dialog" aria-modal="true" aria-label="Food journal">
+    <section class="leaf l"><h2>Good</h2><div class="grid" id="goodGrid"></div></section>
+    <section class="leaf r"><h2>Bad</h2><div class="grid" id="badGrid"></div></section>
+    <button class="close" id="closeBook" type="button" aria-label="Close journal">×</button>
+  </div>
 </div>
 <div class="strength" role="img" id="strength"><span>Strength</span><div class="segs" id="segs"></div><span><b id="segCount"></b></span></div>
 <div class="help" id="help">Arrow keys or drag to float</div>
@@ -93,8 +112,9 @@ function makeAura(f) {
 }
 FOODS.forEach(f => { f.img.onload = () => makeAura(f); });
 
-/* journal */
-const btn = document.getElementById('journalBtn'), page = document.getElementById('page'), list = document.getElementById('list');
+/* journal book */
+const BAD = [['oat','Oat'],['pear','Pear'],['sweet-potato','Sweet potato']].map(([key, name]) => ({key, name, src: `assets/food/${key}.png`}));
+const btn = document.getElementById('journalBtn'), wrap = document.getElementById('bookWrap');
 document.getElementById('count').textContent = FOODS.length;
 const SEGMENTS = 40, segs = document.getElementById('segs');
 for (let i = 0; i < SEGMENTS; i++) {
@@ -105,15 +125,28 @@ for (let i = 0; i < SEGMENTS; i++) {
 }
 document.getElementById('segCount').textContent = `${Math.min(FOODS.length, SEGMENTS)} / ${SEGMENTS}`;
 document.getElementById('strength').setAttribute('aria-label', `Strength: ${Math.min(FOODS.length, SEGMENTS)} of ${SEGMENTS} foods logged successfully`);
-for (const f of FOODS) {
-  const li = document.createElement('li');
-  li.innerHTML = '<img alt=""><span></span><i>✓</i>';
-  li.querySelector('img').src = f.img.src;
-  li.querySelector('span').textContent = f.name;
-  list.appendChild(li);
+function fillGrid(el, items, min) {
+  const n = Math.max(min, Math.ceil(items.length / 4) * 4);
+  for (let i = 0; i < n; i++) {
+    const c = document.createElement('div'), f = items[i];
+    if (f) { c.className = 'cell on'; c.innerHTML = '<img alt=""><span></span>'; c.querySelector('img').src = f.src || f.img.src; c.querySelector('span').textContent = f.name; }
+    else c.className = 'cell empty';
+    el.appendChild(c);
+  }
 }
-function toggle(open) { const on = open ?? page.hidden; page.hidden = !on; btn.setAttribute('aria-expanded', String(on)); }
-btn.addEventListener('click', () => toggle());
+fillGrid(document.getElementById('goodGrid'), FOODS, 20);
+fillGrid(document.getElementById('badGrid'), BAD, 8);
+let lastFocus = null;
+function toggle(open) {
+  const was = wrap.classList.contains('on'), on = open ?? !was;
+  if (on === was) return;
+  wrap.classList.toggle('on', on); wrap.setAttribute('aria-hidden', String(!on));
+  if (on) { lastFocus = document.activeElement; document.getElementById('closeBook').focus(); }
+  else if (lastFocus) lastFocus.focus();
+}
+btn.addEventListener('click', () => toggle(true));
+document.getElementById('closeBook').addEventListener('click', () => toggle(false));
+wrap.addEventListener('click', e => { if (e.target === wrap) toggle(false); });
 addEventListener('keydown', e => { if (e.key === 'Escape') toggle(false); });
 /* floating him yourself: keys or drag; he drifts on his own when left alone */
 let px = null, py = null, goal = null, lastInput = -99;
