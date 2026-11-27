@@ -29,6 +29,8 @@ canvas{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);image-r
 .page li img{width:32px;height:32px;image-rendering:pixelated}
 .page li span{flex:1}
 .page li i{font-style:normal;color:#3f8f5a}
+.help{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);z-index:2;font:14px/1.4 Silkscreen,monospace;color:#fff3dc;background:#2a0a12;border:3px solid #fff3dc;padding:6px 10px;text-align:center;pointer-events:none;transition:opacity 1s;max-width:calc(100vw - 24px)}
+canvas{touch-action:none;cursor:grab}
 </style>
 </head>
 <body>
@@ -36,7 +38,8 @@ canvas{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);image-r
   <button type="button" id="journalBtn" aria-expanded="false" aria-controls="page">Journal <b id="count">0</b> foods ▾</button>
   <div class="page" id="page" hidden><h2>Logged in successfully</h2><ul id="list"></ul></div>
 </div>
-<canvas id="c" role="img" aria-label="A boy with a net floats through a tunnel inside the gut while his safe foods drift by on the stream, glowing gold."></canvas>
+<div class="help" id="help">Arrow keys or drag to float</div>
+<canvas id="c" role="img" aria-label="A boy with a net floats through a tunnel inside the gut while his safe foods drift by on the stream, glowing gold. Use the arrow keys or drag to float him around."></canvas>
 <script>
 {
 const cv = document.getElementById('c'), g = cv.getContext('2d');
@@ -93,7 +96,18 @@ for (const f of FOODS) {
 function toggle(open) { const on = open ?? page.hidden; page.hidden = !on; btn.setAttribute('aria-expanded', String(on)); }
 btn.addEventListener('click', () => toggle());
 addEventListener('keydown', e => { if (e.key === 'Escape') toggle(false); });
-cv.addEventListener('pointerdown', () => toggle(false));
+/* floating him yourself: keys or drag; he drifts on his own when left alone */
+let px = null, py = null, goal = null, lastInput = -99;
+const keys = new Set();
+const toNative = e => { const r = cv.getBoundingClientRect(); return {x: (e.clientX - r.left) / k, y: (e.clientY - r.top) / k}; };
+cv.addEventListener('pointerdown', e => { toggle(false); cv.setPointerCapture(e.pointerId); goal = toNative(e); });
+cv.addEventListener('pointermove', e => { if (goal) goal = toNative(e); });
+const endDrag = () => { goal = null; };
+cv.addEventListener('pointerup', endDrag); cv.addEventListener('pointercancel', endDrag);
+addEventListener('keydown', e => { const kk = e.key.toLowerCase(); if (['arrowup','arrowdown','arrowleft','arrowright','w','a','s','d'].includes(kk)) { keys.add(kk); e.preventDefault(); } });
+addEventListener('keyup', e => keys.delete(e.key.toLowerCase()));
+addEventListener('blur', () => keys.clear());
+setTimeout(() => document.getElementById('help').style.opacity = 0, 6000);
 
 /* canvas sizing at an integer pixel scale */
 let W = 0, H = 0, k = 1, top = 0, topCol = '#4a0f1a', botCol = '#4a0f1a';
@@ -162,8 +176,18 @@ function draw(now) {
   }
 
   /* the boy drifts on his own */
-  const kx = Math.round(W * .4 + (still ? 0 : Math.sin(t * .23) * W * .08));
-  const ky = top + 66 + (still ? 0 : Math.round(Math.sin(t * .41) * 7 + Math.sin(t * 2.2) * 1.5));
+  const ax = W * .4 + (still ? 0 : Math.sin(t * .23) * W * .08), ay = top + 66 + (still ? 0 : Math.sin(t * .41) * 7);
+  if (px === null) { px = ax; py = ay; }
+  let vx = 0, vy = 0;
+  if (keys.has('arrowleft') || keys.has('a')) vx -= 1;
+  if (keys.has('arrowright') || keys.has('d')) vx += 1;
+  if (keys.has('arrowup') || keys.has('w')) vy -= 1;
+  if (keys.has('arrowdown') || keys.has('s')) vy += 1;
+  if (vx || vy) { const m = Math.hypot(vx, vy); px += vx / m * 60 * dt; py += vy / m * 60 * dt; lastInput = t; }
+  else if (goal) { const gx = goal.x - 6, gy = goal.y, d = Math.hypot(gx - px, gy - py); if (d > 1) { const st = Math.min(d, 70 * dt); px += (gx - px) / d * st; py += (gy - py) / d * st; } lastInput = t; }
+  else if (t - lastInput > 3) { const e = Math.min(1, dt * .8); px += (ax - px) * e; py += (ay - py) * e; }
+  px = Math.max(20, Math.min(W - 32, px)); py = Math.max(top + 34, Math.min(top + 86, py));
+  const kx = Math.round(px), ky = Math.round(py) + (still ? 0 : Math.round(Math.sin(t * 2.2) * 1.5));
   if (!still) {
     g.fillStyle = 'rgba(255,235,210,.55)';
     for (const l of lines) {
