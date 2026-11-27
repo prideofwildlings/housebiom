@@ -6,74 +6,108 @@
 <title>Housebiom</title>
 <link rel="artifact-thumbnail" href="thumb.jpg">
 <style>
-/* VOICE: quiet, cozy, magical
-   IDEA: a painted theatre set inside the gut, built from stacked layers
-   PICTURE: the whole screen is the scene
-   COLOUR and TYPE: the art's crimson, amber and teal; no text for now
-   LAYOUT: full-bleed scene only */
+/* VOICE: playful, retro, a little magical
+   IDEA: a Game Boy Advance era side-scroller set inside the gut
+   PICTURE: the whole screen is the game canvas, crisp pixels at an integer scale
+   COLOUR and TYPE: the art's own crimson and teal; no text for now
+   LAYOUT: full-bleed canvas, nothing else */
 :root{color-scheme:dark}
 *{box-sizing:border-box;margin:0}
-html,body{height:100%;background:#1a0508;overflow:hidden}
-.view{position:relative;width:100vw;height:100vh;height:100dvh;overflow:hidden}
-.scene{position:absolute;left:50%;top:50%;width:max(100vw,calc(100dvh*1672/941));aspect-ratio:1672/941;transform:translate(-51%,-50%);--px:0;--py:0}
-@media(max-aspect-ratio:1/1){.scene{transform:translate(-55%,-50%)}}
-.layer{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;user-select:none}
-.glow{position:absolute;width:135%;aspect-ratio:1672/941;left:-31.85%;top:-23.9%;pointer-events:none;transform:translate(calc(var(--px)*6px),calc(var(--py)*4px))}
-.glowpulse{animation:breathe 7s ease-in-out infinite}
-.walls{transform:translate(calc(var(--px)*10px),calc(var(--py)*6px)) scale(1.03)}
-.water{transform:translate(calc(var(--px)*16px),calc(var(--py)*8px)) scale(1.03);-webkit-mask-image:linear-gradient(to bottom,transparent 54.5%,#000 58%);mask-image:linear-gradient(to bottom,transparent 54.5%,#000 58%)}
-.shimmer{position:absolute;left:38%;width:26%;top:57%;height:43%;pointer-events:none;background:repeating-linear-gradient(180deg,rgba(255,214,140,0) 0 9px,rgba(255,214,140,.16) 9px 11px);mix-blend-mode:screen;-webkit-mask-image:radial-gradient(ellipse at 50% 30%,#000,transparent 70%);mask-image:radial-gradient(ellipse at 50% 30%,#000,transparent 70%);animation:shim 3.5s linear infinite}
-.frame{transform:translate(calc(var(--px)*34px),calc(var(--py)*18px)) scale(1.07)}
-.motes{position:absolute;inset:0;pointer-events:none}
-.motes i{position:absolute;width:5px;height:5px;border-radius:50%;background:#ffe2a6;box-shadow:0 0 8px 2px rgba(255,200,120,.6);opacity:0;animation:mote linear infinite}
-@keyframes breathe{50%{transform:scale(1.04);filter:brightness(1.12)}}
-@keyframes shim{to{background-position:0 22px}}
-@keyframes mote{0%{opacity:0;transform:translate(0,0)}15%{opacity:.8}100%{opacity:0;transform:translate(var(--dx),-180px)}}
-@media(prefers-reduced-motion:reduce){*{animation:none!important}}
+html,body{height:100%;background:#4a0f1a;overflow:hidden}
+canvas{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);image-rendering:pixelated;image-rendering:crisp-edges;cursor:pointer;touch-action:manipulation}
 </style>
 </head>
 <body>
-<div class="view" id="view" role="img" aria-label="A glowing tunnel inside the gut with a teal river">
-  <div class="scene" id="scene">
-    <div class="glow"><img class="layer glowpulse" src="assets/glow.webp" alt=""></div>
-    <img class="layer walls" src="assets/walls.webp" alt="">
-    <div class="motes" id="motes"></div>
-    <img class="layer water" src="assets/water.webp" alt="">
-    <div class="shimmer"></div>
-    <img class="layer frame" src="assets/frame.webp" alt="">
-  </div>
-</div>
+<canvas id="c" role="img" aria-label="A boy with a net flying through a scrolling tunnel inside the gut. Tap to swing the net."></canvas>
 <script>
 {
-const scene = document.getElementById('scene'), view = document.getElementById('view');
+const cv = document.getElementById('c'), g = cv.getContext('2d');
 const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const motes = document.getElementById('motes');
-for (let i = 0; i < 16; i++) {
-  const d = document.createElement('i');
-  d.style.left = (40 + Math.random() * 40) + '%';
-  d.style.top = (35 + Math.random() * 25) + '%';
-  d.style.setProperty('--dx', (Math.random() * 60 - 30) + 'px');
-  d.style.animationDuration = (7 + Math.random() * 8) + 's';
-  d.style.animationDelay = (-Math.random() * 12) + 's';
-  motes.appendChild(d);
+const BG_H = 145, TILE_W = 514, FRAME_W = 83, FRAME_H = 85, ANCHOR_X = 31, ANCHOR_Y = 51;
+const bg = new Image(), kid = new Image();
+bg.src = 'assets/px-bg.png'; kid.src = 'assets/px-kid.png';
+
+let W = 0, H = 0, k = 1, top = 0, topCol = '#4a0f1a', botCol = '#4a0f1a';
+function fit() {
+  const vw = innerWidth, vh = innerHeight;
+  k = Math.max(1, Math.min(Math.ceil(vh / BG_H), Math.floor(vw / 130)));
+  W = Math.ceil(vw / k); H = Math.ceil(vh / k);
+  cv.width = W; cv.height = H;
+  cv.style.width = W * k + 'px'; cv.style.height = H * k + 'px';
+  top = Math.floor((H - BG_H) / 2);
+  g.imageSmoothingEnabled = false;
 }
-let tx = 0, ty = 0, cx = 0, cy = 0, pointer = false;
-view.addEventListener('pointermove', e => {
-  if (e.pointerType !== 'mouse') return;
-  pointer = true;
-  const r = view.getBoundingClientRect();
-  tx = (e.clientX - r.left) / r.width * 2 - 1;
-  ty = (e.clientY - r.top) / r.height * 2 - 1;
-});
-view.addEventListener('pointerleave', () => { pointer = false; });
-function drift(t) {
-  if (!pointer) { tx = Math.sin(t / 5200) * .5; ty = Math.sin(t / 7300) * .3; }
-  cx += (tx - cx) * .05; cy += (ty - cy) * .05;
-  scene.style.setProperty('--px', (-cx).toFixed(3));
-  scene.style.setProperty('--py', (-cy).toFixed(3));
-  requestAnimationFrame(drift);
+addEventListener('resize', fit); fit();
+
+function edgeColours() {
+  const t = document.createElement('canvas'); t.width = 1; t.height = BG_H;
+  const c = t.getContext('2d'); c.drawImage(bg, 0, 0, 1, BG_H, 0, 0, 1, BG_H);
+  const px = y => { const d = c.getImageData(0, y, 1, 1).data; return `rgb(${d[0]},${d[1]},${d[2]})`; };
+  topCol = px(0); botCol = px(BG_H - 1);
+  document.body.style.background = topCol;
 }
-if (!still) requestAnimationFrame(drift);
+bg.onload = edgeColours;
+
+/* bubbles rising from the stream */
+const bubbles = Array.from({length: 10}, () => ({x: Math.random() * TILE_W, life: Math.random()}));
+/* speed lines behind the boy */
+const lines = Array.from({length: 4}, (_, i) => ({y: 0, x: 0, len: 0, t: i / 4}));
+
+let action = null, actionUntil = 0, nextCheer = 9000;
+function swing(now) { action = 2; actionUntil = now + 380; }
+cv.addEventListener('pointerdown', () => swing(performance.now()));
+addEventListener('keydown', e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); swing(performance.now()); } });
+
+let start = performance.now();
+function draw(now) {
+  const t = (now - start) / 1000;
+  g.fillStyle = topCol; g.fillRect(0, 0, W, top + 1);
+  g.fillStyle = botCol; g.fillRect(0, top + BG_H - 1, W, H - top - BG_H + 1);
+  const scroll = still ? 0 : Math.floor(t * 14) % TILE_W;
+  if (bg.complete && bg.naturalWidth) for (let x = -scroll; x < W; x += TILE_W) g.drawImage(bg, x, top);
+
+  if (!still) {
+    g.fillStyle = '#9ff0d0';
+    for (const b of bubbles) {
+      b.life += 0.008;
+      if (b.life > 1) { b.life = 0; b.x = Math.random() * TILE_W; }
+      const sx = ((b.x - t * 14) % TILE_W + TILE_W) % TILE_W;
+      const y = top + 96 - Math.floor(b.life * 14);
+      if (b.life < .85) for (let x = sx; x < W; x += TILE_W) g.fillRect(Math.floor(x), y, 1, 1);
+    }
+  }
+
+  const kx = Math.floor(W * .4), bob = still ? 0 : Math.round(Math.sin(t * 2.2) * 2);
+  const ky = top + 72 + bob;
+
+  if (!still) {
+    g.fillStyle = 'rgba(255,235,210,.55)';
+    for (const l of lines) {
+      l.t += 0.02;
+      if (l.t > 1) { l.t = 0; l.y = ky - 18 + Math.floor(Math.random() * 34); l.len = 6 + Math.floor(Math.random() * 10); }
+      const x = kx - 34 - Math.floor(l.t * 40);
+      if (l.len) g.fillRect(x, l.y, l.len, 1);
+    }
+  }
+
+  let frame = Math.floor(t * 4.5) % 2;
+  if (now < actionUntil) frame = action;
+  else if (!still && now - start > nextCheer) { action = 3; actionUntil = now + 1100; nextCheer = now - start + 14000 + Math.random() * 8000; frame = 3; }
+  if (still) frame = 0;
+
+  if (kid.complete && kid.naturalWidth) g.drawImage(kid, frame * FRAME_W, 0, FRAME_W, FRAME_H, kx - ANCHOR_X, ky - ANCHOR_Y, FRAME_W, FRAME_H);
+
+  if (frame === 3) {
+    g.fillStyle = '#ffe9a8';
+    for (let i = 0; i < 8; i++) {
+      const a = i / 8 * Math.PI * 2 + t * 3, r = 22 + (i % 2) * 6;
+      g.fillRect(kx + Math.round(Math.cos(a) * r), ky - 30 + Math.round(Math.sin(a) * r * .7), 1 + (i % 2), 1 + (i % 2));
+    }
+  }
+  if (!still) requestAnimationFrame(draw);
+}
+const go = () => requestAnimationFrame(draw);
+if (still) { let n = 0; const once = () => { if (++n === 2) go(); }; bg.addEventListener('load', once); kid.addEventListener('load', once); } else go();
 }
 </script>
 </body>
