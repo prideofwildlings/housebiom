@@ -114,12 +114,12 @@ function draw(now) {
 
   /* a single scull rowing across the lake at UT2 pace (20 strokes a minute).
      The rower faces right, so the boat travels left, far out near the horizon.
-     Frames: finish, extraction, recovery, recovery; the jump back to the finish is the quick drive. */
+     Frames: catch, early drive, mid drive, finish, recovery, late recovery (drive : recovery about 1 : 2). */
   if (scull.naturalWidth) {
-    const RATE = 20, T = 60 / RATE, DUR = [.55, .45, 1, 1].map(d => d * T / 3);
+    const RATE = 20, T = 60 / RATE, DUR = [.25, .25, .25, .25, 1, 1].map(d => d * T / 3);
     const cyc = 150, ph = still ? .4 : (t % cyc) / cyc;
     let st = still ? 0 : t % T, f = 0;
-    while (f < 3 && st > DUR[f]) { st -= DUR[f]; f++; }
+    while (f < 5 && st > DUR[f]) { st -= DUR[f]; f++; }
     const glide = still ? 0 : Math.sin((t % T) / T * Math.PI * 2) * .6;
     const xr = wx(LAKE.x1) - 20, xl = wx(LAKE.x0) + 4;
     const bx = Math.round(xr + (xl - xr) * ph - glide), by = wy(LAKE.y0) + 3;
