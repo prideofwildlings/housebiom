@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Housebiom · Training</title>
+<link href="https://fonts.googleapis.com/css2?family=Silkscreen&display=swap" rel="stylesheet">
+<style>
+/* VOICE: calm, bright, hopeful
+   IDEA: the training world: a lake seen from a ruined lookout, in the same pixel grid as the hub and the gut
+   PICTURE: the lookout fills the screen at an integer pixel scale
+   COLOUR and TYPE: the art's turquoise, cloud white and ruin brown; Silkscreen for the few words
+   LAYOUT: full-bleed canvas, back and sound buttons top right */
+:root{color-scheme:dark}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%;background:#2a1a2e;overflow:hidden}
+canvas{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);image-rendering:pixelated;image-rendering:crisp-edges;touch-action:none;cursor:grab}
+.sound{position:absolute;right:14px;top:12px;z-index:3;width:48px;height:48px;padding:0;background:#2a1a2e;border:3px solid #fff3dc;box-shadow:2px 2px 0 #120a14;cursor:pointer;display:grid;place-items:center}
+.sound:focus-visible,.back:focus-visible{outline:3px solid #8ff0c8;outline-offset:2px}
+.sound .w{opacity:0}.sound[aria-pressed=true] .w{opacity:1}.sound[aria-pressed=true] .x{opacity:0}
+.back{position:absolute;right:72px;top:12px;z-index:3;height:48px;padding:0 12px 0 8px;background:#2a1a2e;border:3px solid #fff3dc;box-shadow:2px 2px 0 #120a14;color:#fff3dc;font:14px Silkscreen,monospace;cursor:pointer;display:flex;align-items:center;gap:6px;text-decoration:none}
+.help{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);z-index:2;font:14px/1.4 Silkscreen,monospace;color:#fff3dc;background:#2a1a2e;border:3px solid #fff3dc;padding:6px 10px;text-align:center;pointer-events:none;transition:opacity 1s;max-width:calc(100vw - 24px)}
+.veil{position:fixed;inset:0;z-index:20;pointer-events:none;background:radial-gradient(circle at 50% 50%,#d8fff6 0,#2bb3a8 35%,#0a3a3a 75%);opacity:1;transition:opacity .9s ease-out}
+.veil.off{opacity:0}
+.veil.on{opacity:1;transition:opacity .45s ease-in}
+@media(prefers-reduced-motion:reduce){.veil{transition:none}}
+</style>
+</head>
+<body>
+<a class="back" id="back" href="../index.html" aria-label="Back to the hub"><svg viewBox="0 0 10 10" width="20" height="20" shape-rendering="crispEdges" aria-hidden="true"><rect x="1" y="4" width="8" height="2" fill="#fff3dc"/><rect x="2" y="3" width="2" height="4" fill="#fff3dc"/><rect x="3" y="2" width="1" height="6" fill="#fff3dc"/><rect x="4" y="1" width="1" height="1" fill="#fff3dc"/><rect x="4" y="8" width="1" height="1" fill="#fff3dc"/></svg>Hub</a>
+<button type="button" class="sound" id="soundBtn" aria-pressed="false" aria-label="Sound"><svg viewBox="0 0 16 16" width="32" height="32" shape-rendering="crispEdges" aria-hidden="true"><rect x="2" y="6" width="3" height="4" fill="#fff3dc"/><rect x="5" y="5" width="1" height="6" fill="#fff3dc"/><rect x="6" y="4" width="1" height="8" fill="#fff3dc"/><rect x="7" y="3" width="1" height="10" fill="#fff3dc"/><g class="w" fill="#8ff0c8"><rect x="10" y="6" width="1" height="4"/><rect x="12" y="4" width="1" height="8"/><rect x="11" y="5" width="1" height="1"/><rect x="11" y="10" width="1" height="1"/></g><g class="x" fill="#ff8a8a"><rect x="10" y="6" width="1" height="1"/><rect x="11" y="7" width="1" height="1"/><rect x="12" y="8" width="1" height="1"/><rect x="13" y="9" width="1" height="1"/><rect x="13" y="6" width="1" height="1"/><rect x="12" y="7" width="1" height="1"/><rect x="11" y="8" width="1" height="1"/><rect x="10" y="9" width="1" height="1"/></g></svg></button>
+<div class="help" id="help">Arrow keys or drag to fly</div>
+<div class="veil" id="veil"></div>
+<canvas id="c" role="img" aria-label="The training world: a calm turquoise lake under big clouds, seen from a ruined lookout with a small stone platform. Use the arrow keys or drag to fly the winged hero."></canvas>
+<script src="../assets/sound.js"></script>
+<script>
+{
+const cv = document.getElementById('c'), g = cv.getContext('2d');
+const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const sound = window.HBSound;
+const BGS = 2, BG_W = 257, BG_H = 145, FRAME_W = 51, FRAME_H = 55, ANCHOR_X = 25, ANCHOR_Y = 22;
+const LAKE = {x0: 30, x1: 212, y0: 106, y1: 124};
+const bg = new Image(), hero = new Image();
+bg.src = '../assets/px-train.png'; hero.src = '../assets/px-hero.png';
+sound.bindButton(document.getElementById('soundBtn'));
+
+/* arriving through the portal, and going back */
+const veil = document.getElementById('veil');
+requestAnimationFrame(() => requestAnimationFrame(() => veil.classList.add('off')));
+document.getElementById('back').addEventListener('click', e => {
+  e.preventDefault();
+  sound.whoosh && sound.whoosh();
+  veil.classList.remove('off'); veil.classList.add('on');
+  setTimeout(() => { location.href = '../index.html'; }, still ? 0 : 480);
+});
+addEventListener('pageshow', e => { if (e.persisted) { veil.classList.remove('on'); veil.classList.add('off'); } });
+
+/* integer-scale canvas that covers the screen */
+let W = 0, H = 0, k = 1, top = 0, left = 0;
+function fit() {
+  const vw = innerWidth, vh = innerHeight;
+  k = Math.max(1, Math.min(Math.ceil(vh / (BG_H * BGS)), Math.floor(vw / 110)));
+  W = Math.ceil(vw / k); H = Math.ceil(vh / k);
+  cv.width = W; cv.height = H;
+  cv.style.width = W * k + 'px'; cv.style.height = H * k + 'px';
+  top = Math.floor((H - BG_H * BGS) / 2); left = Math.floor((W - BG_W * BGS) / 2);
+  g.imageSmoothingEnabled = false;
+}
+addEventListener('resize', fit); fit();
+const wx = x => left + x * BGS, wy = y => top + y * BGS;
+
+/* controls: keys or drag; he wanders when left alone */
+let px = null, py = null, goal = null, lastInput = -99, face = 1, pose = 0, poseUntil = 0, nextPoseAt = 8, wander = null, wanderAt = 0, speed = 0;
+const keys = new Set();
+const toNative = e => { const r = cv.getBoundingClientRect(); return {x: (e.clientX - r.left) / k, y: (e.clientY - r.top) / k}; };
+cv.addEventListener('pointerdown', e => { cv.setPointerCapture(e.pointerId); goal = toNative(e); });
+cv.addEventListener('pointermove', e => { if (goal) goal = toNative(e); });
+const endDrag = () => { goal = null; };
+cv.addEventListener('pointerup', endDrag); cv.addEventListener('pointercancel', endDrag);
+addEventListener('keydown', e => { const kk = e.key.toLowerCase(); if (['arrowup','arrowdown','arrowleft','arrowright','w','a','s','d'].includes(kk)) { keys.add(kk); e.preventDefault(); } });
+addEventListener('keyup', e => keys.delete(e.key.toLowerCase()));
+addEventListener('blur', () => keys.clear());
+setTimeout(() => document.getElementById('help').style.opacity = 0, 6000);
+
+/* lake light streaks and a few birds */
+const streaks = Array.from({length: 14}, () => ({x: LAKE.x0 + Math.random() * (LAKE.x1 - LAKE.x0), y: LAKE.y0 + 1 + Math.floor(Math.random() * (LAKE.y1 - LAKE.y0 - 2)), len: 3 + Math.floor(Math.random() * 8), ph: Math.random() * 6, v: .8 + Math.random() * 1.6}));
+const birds = Array.from({length: 3}, (_, i) => ({x: Math.random() * BG_W, y: 25 + i * 9 + Math.random() * 6, v: 6 + Math.random() * 5, ph: Math.random() * 6}));
+const lines = Array.from({length: 4}, (_, i) => ({y: 0, len: 0, t: i / 4}));
+const start = performance.now(); let lastT = 0;
+function draw(now) {
+  const t = (now - start) / 1000, dt = Math.min(.05, t - lastT); lastT = t;
+  g.fillStyle = '#2a1a2e'; g.fillRect(0, 0, W, H);
+  if (bg.naturalWidth) g.drawImage(bg, left, top, BG_W * BGS, BG_H * BGS);
+
+  if (!still) {
+    for (const s of streaks) {
+      s.x += s.v * dt * (s.y % 2 ? 1 : -1);
+      if (s.x > LAKE.x1 - s.len) s.x = LAKE.x0; if (s.x < LAKE.x0) s.x = LAKE.x1 - s.len;
+      if (s.y >= 116 && s.x > 100 && s.x < 152) continue;
+      const a = .25 + .3 * (.5 + .5 * Math.sin(t * 1.6 + s.ph));
+      g.fillStyle = `rgba(235,255,250,${a})`;
+      g.fillRect(Math.round(wx(s.x)), wy(s.y), s.len * BGS, 1);
+    }
+    g.fillStyle = '#3a2a40';
+    for (const b of birds) {
+      b.x += b.v * dt; if (b.x > BG_W + 6) { b.x = -6; b.y = 20 + Math.random() * 30; }
+      const bx = Math.round(wx(b.x)), by = Math.round(wy(b.y + Math.sin(t * .8 + b.ph) * 2)), up = Math.floor(t * 5 + b.ph) % 2;
+      g.fillRect(bx, by, 1, 1); g.fillRect(bx - 1, by - up, 1, 1); g.fillRect(bx + 1, by - up, 1, 1); g.fillRect(bx - 2, by - up * 2 + (up ? 0 : 1), 1, 1); g.fillRect(bx + 2, by - up * 2 + (up ? 0 : 1), 1, 1);
+    }
+  }
+
+  /* hero */
+  const minX = 26, maxX = W - 34, minY = top + 30, maxY = wy(122) - 30;
+  if (px === null) { px = wx(BG_W / 2) + 6; py = wy(104) - 26; lastInput = t + 1; }
+  const ox = px, oy = py;
+  let vx = 0, vy = 0;
+  if (keys.has('arrowleft') || keys.has('a')) vx -= 1;
+  if (keys.has('arrowright') || keys.has('d')) vx += 1;
+  if (keys.has('arrowup') || keys.has('w')) vy -= 1;
+  if (keys.has('arrowdown') || keys.has('s')) vy += 1;
+  if (vx || vy) { const m = Math.hypot(vx, vy); px += vx / m * 60 * dt; py += vy / m * 60 * dt; lastInput = t; wander = null; }
+  else if (goal) { const gx = goal.x - 6, gy = goal.y, d = Math.hypot(gx - px, gy - py); if (d > 1) { const st = Math.min(d, 70 * dt); px += (gx - px) / d * st; py += (gy - py) / d * st; } lastInput = t; wander = null; }
+  else if (!still && t - lastInput > 3) {
+    if (!wander || t > wanderAt) { wander = {x: minX + Math.random() * (maxX - minX), y: minY + 6 + Math.random() * (maxY - minY - 12)}; wanderAt = t + 7 + Math.random() * 6; }
+    const dx = wander.x - px, dy = wander.y - py, d = Math.hypot(dx, dy);
+    if (d > 2) { const st = Math.min(d, Math.min(22, d * .9) * dt); px += dx / d * st; py += dy / d * st; }
+  }
+  px = Math.max(minX, Math.min(maxX, px)); py = Math.max(minY, Math.min(maxY, py));
+  const vxNow = dt ? (px - ox) / dt : 0;
+  speed = speed * .85 + (dt ? Math.hypot(px - ox, py - oy) / dt : 0) * .15;
+  const moving = speed > 6;
+  if (Math.abs(vxNow) > 4) face = vxNow > 0 ? 1 : -1;
+  const kx = Math.round(px), ky = Math.round(py) + (still ? 0 : Math.round(Math.sin(t * 2.2) * 1.5));
+
+  /* his reflection on the lake when he flies low over it */
+  if (hero.naturalWidth && py > wy(LAKE.y0) - 60 && px > wx(LAKE.x0) && px < wx(LAKE.x1)) {
+    const ry = wy(LAKE.y0) * 2 - ky + 6;
+    g.save(); g.globalAlpha = .18; g.translate(kx, ry); g.scale(face, -1);
+    g.drawImage(hero, 0, 0, FRAME_W, FRAME_H, -ANCHOR_X, -ANCHOR_Y, FRAME_W, FRAME_H);
+    g.restore();
+  }
+  if (!still && speed > 30) {
+    g.fillStyle = 'rgba(255,255,255,.6)';
+    for (const l of lines) {
+      l.t += dt * 1.2;
+      if (l.t > 1) { l.t = 0; l.y = ky - 4 + Math.floor(Math.random() * 20); l.len = 4 + Math.floor(Math.random() * 7); }
+      if (l.len && face > 0) g.fillRect(kx - 28 - Math.floor(l.t * 30), l.y, l.len, 1);
+      if (l.len && face < 0) g.fillRect(kx + 24 + Math.floor(l.t * 30), l.y, l.len, 1);
+    }
+  }
+  let frame = 0;
+  if (!still) {
+    if (moving) { frame = Math.floor(t * 3) % 2; poseUntil = 0; nextPoseAt = t + 6; }
+    else {
+      if (t > nextPoseAt) { pose = Math.random() < .55 ? 2 : 3; poseUntil = t + 2.4; nextPoseAt = t + 9 + Math.random() * 7; }
+      frame = t < poseUntil ? pose : ((t * .8) % 1 < .28 ? 1 : 0);
+    }
+  }
+  if (hero.naturalWidth) {
+    g.save(); g.translate(kx, ky); g.scale(face, 1);
+    g.drawImage(hero, frame * FRAME_W, 0, FRAME_W, FRAME_H, -ANCHOR_X, -ANCHOR_Y, FRAME_W, FRAME_H);
+    g.restore();
+  }
+  if (!still) requestAnimationFrame(draw);
+}
+requestAnimationFrame(draw);
+if (still) { bg.addEventListener('load', () => requestAnimationFrame(draw)); hero.addEventListener('load', () => requestAnimationFrame(draw)); }
+}
+</script>
+</body>
+</html>
