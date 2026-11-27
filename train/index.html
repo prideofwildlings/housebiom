@@ -14,7 +14,7 @@
 :root{color-scheme:dark}
 *{box-sizing:border-box;margin:0}
 html,body{height:100%;background:#2a1a2e;overflow:hidden}
-canvas{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);image-rendering:pixelated;image-rendering:crisp-edges;touch-action:none;cursor:grab}
+canvas{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);image-rendering:pixelated;image-rendering:crisp-edges;touch-action:none}
 .sound{position:absolute;right:14px;top:12px;z-index:3;width:48px;height:48px;padding:0;background:#2a1a2e;border:3px solid #fff3dc;box-shadow:2px 2px 0 #120a14;cursor:pointer;display:grid;place-items:center}
 .sound:focus-visible,.back:focus-visible{outline:3px solid #8ff0c8;outline-offset:2px}
 .sound .w{opacity:0}.sound[aria-pressed=true] .w{opacity:1}.sound[aria-pressed=true] .x{opacity:0}
@@ -29,9 +29,9 @@ canvas{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);image-r
 <body>
 <a class="back" id="back" href="../index.html" aria-label="Back to the hub"><svg viewBox="0 0 10 10" width="20" height="20" shape-rendering="crispEdges" aria-hidden="true"><rect x="1" y="4" width="8" height="2" fill="#fff3dc"/><rect x="2" y="3" width="2" height="4" fill="#fff3dc"/><rect x="3" y="2" width="1" height="6" fill="#fff3dc"/><rect x="4" y="1" width="1" height="1" fill="#fff3dc"/><rect x="4" y="8" width="1" height="1" fill="#fff3dc"/></svg>Hub</a>
 <button type="button" class="sound" id="soundBtn" aria-pressed="false" aria-label="Sound"><svg viewBox="0 0 16 16" width="32" height="32" shape-rendering="crispEdges" aria-hidden="true"><rect x="2" y="6" width="3" height="4" fill="#fff3dc"/><rect x="5" y="5" width="1" height="6" fill="#fff3dc"/><rect x="6" y="4" width="1" height="8" fill="#fff3dc"/><rect x="7" y="3" width="1" height="10" fill="#fff3dc"/><g class="w" fill="#8ff0c8"><rect x="10" y="6" width="1" height="4"/><rect x="12" y="4" width="1" height="8"/><rect x="11" y="5" width="1" height="1"/><rect x="11" y="10" width="1" height="1"/></g><g class="x" fill="#ff8a8a"><rect x="10" y="6" width="1" height="1"/><rect x="11" y="7" width="1" height="1"/><rect x="12" y="8" width="1" height="1"/><rect x="13" y="9" width="1" height="1"/><rect x="13" y="6" width="1" height="1"/><rect x="12" y="7" width="1" height="1"/><rect x="11" y="8" width="1" height="1"/><rect x="10" y="9" width="1" height="1"/></g></svg></button>
-<div class="help" id="help">Arrow keys or drag to fly</div>
+
 <div class="veil" id="veil"></div>
-<canvas id="c" role="img" aria-label="The training world: a calm turquoise lake under big clouds, seen from a ruined lookout. The winged hero stands on a small stone platform with his back to you, holding two rowing oars, while a rower in a single scull rows slowly along the horizon. Use the arrow keys or drag to fly; leave him and he lands back on the platform."></canvas>
+<canvas id="c" role="img" aria-label="The training world: a calm turquoise lake under big clouds, seen from a ruined lookout. The winged hero stands on a small stone platform with his back to you, holding two rowing oars, while a rower in a single scull rows slowly along the horizon."></canvas>
 <script src="../assets/sound.js"></script>
 <script>
 {
@@ -83,7 +83,7 @@ cv.addEventListener('pointerup', endDrag); cv.addEventListener('pointercancel', 
 addEventListener('keydown', e => { const kk = e.key.toLowerCase(); if (['arrowup','arrowdown','arrowleft','arrowright','w','a','s','d'].includes(kk)) { keys.add(kk); e.preventDefault(); } });
 addEventListener('keyup', e => keys.delete(e.key.toLowerCase()));
 addEventListener('blur', () => keys.clear());
-setTimeout(() => document.getElementById('help').style.opacity = 0, 6000);
+// (no help hint: he stays on his platform)
 
 /* lake light streaks and a few birds */
 const streaks = Array.from({length: 14}, () => ({x: LAKE.x0 + Math.random() * (LAKE.x1 - LAKE.x0), y: LAKE.y0 + 1 + Math.floor(Math.random() * (LAKE.y1 - LAKE.y0 - 2)), len: 3 + Math.floor(Math.random() * 8), ph: Math.random() * 6, v: .8 + Math.random() * 1.6}));
@@ -140,7 +140,7 @@ function draw(now) {
   if (keys.has('arrowright') || keys.has('d')) vx += 1;
   if (keys.has('arrowup') || keys.has('w')) vy -= 1;
   if (keys.has('arrowdown') || keys.has('s')) vy += 1;
-  if (vx || vy || goal) { if (standing) { standing = false; py -= 6; } }
+  /* no flying in this world: he stays on the platform */
   if (standing) { px = landX; py = landY; }
   else if (vx || vy) { const m = Math.hypot(vx, vy); px += vx / m * 60 * dt; py += vy / m * 60 * dt; lastInput = t; }
   else if (goal) { const gx = goal.x - 6, gy = goal.y, d = Math.hypot(gx - px, gy - py); if (d > 1) { const st = Math.min(d, 70 * dt); px += (gx - px) / d * st; py += (gy - py) / d * st; } lastInput = t; }
