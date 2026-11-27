@@ -81,7 +81,7 @@ canvas{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);image-r
   </form>
 </div>
 <div class="veil" id="veil"></div>
-<canvas id="c" role="img" aria-label="The training world: a calm turquoise lake under big clouds, seen from a ruined lookout. The winged hero stands on a small stone platform with his back to you, holding two rowing oars; an old wooden rowing seat lies abandoned in the grass, while he and his friend row a double scull slowly along the horizon."></canvas>
+<canvas id="c" role="img" aria-label="The training world: a calm turquoise lake under big clouds, seen from a ruined lookout. The winged hero stands on a small stone platform with his back to you, holding two rowing oars; an old wooden rowing seat rests in the grass by the water like a relic, while he and his friend row a double scull slowly along the horizon."></canvas>
 <script src="../assets/sound.js"></script>
 <script src="../assets/lake-sound.js"></script>
 <script>
@@ -101,7 +101,7 @@ let seatShade = null;   /* the seat tinted into the shade of the ground it lies 
 seat.addEventListener('load', () => {
   const c = document.createElement('canvas'); c.width = seat.naturalWidth; c.height = seat.naturalHeight;
   const x = c.getContext('2d'); x.drawImage(seat, 0, 0);
-  x.globalCompositeOperation = 'source-atop'; x.fillStyle = 'rgba(40,24,60,.42)'; x.fillRect(0, 0, c.width, c.height);
+  x.globalCompositeOperation = 'source-atop'; x.fillStyle = 'rgba(40,24,60,.12)'; x.fillRect(0, 0, c.width, c.height);
   seatShade = c;
 });   /* an old wooden rowing seat, left in the grass long ago */
 bg.src = '../assets/px-train.png'; hero.src = '../assets/px-hero.png'; stand.src = '../assets/px-stand.png'; scull.src = '../assets/px-double.png';
@@ -253,11 +253,11 @@ function draw(now) {
   g.fillStyle = '#2a1a2e'; g.fillRect(0, 0, W, H);
   if (bg.naturalWidth) g.drawImage(bg, left, top, BG_W * BGS, BG_H * BGS);
   if (seat.naturalWidth) {
-    const sx = wx(206) - 16, sy = wy(130) - seat.naturalHeight + 3;
+    const sx = wx(70) - 22, sy = wy(126) - seat.naturalHeight + 3;
     g.fillStyle = 'rgba(30,20,30,.35)'; g.fillRect(sx + 3, sy + seat.naturalHeight - 3, seat.naturalWidth - 6, 2); g.fillRect(sx + 6, sy + seat.naturalHeight - 1, seat.naturalWidth - 12, 1);
     g.drawImage(seatShade || seat, sx, sy);
-    /* a few grass blades in front so it sits in the grass, not on it */
-    g.fillStyle = '#5f6b2c'; for (const [gx, gh] of [[4, 3], [9, 2], [15, 3], [22, 2], [27, 3]]) g.fillRect(sx + gx, sy + seat.naturalHeight - gh, 1, gh);
+    /* a relic left with care by the water: once in a while a faint glint runs over it */
+    if (!still) { const gp = (t % 9) / 9; if (gp < .12) { const gx = Math.round(sx + 8 + gp / .12 * 26); g.fillStyle = 'rgba(255,246,210,.55)'; g.fillRect(gx, sy + 5, 1, 1); g.fillRect(gx - 1, sy + 6, 3, 1); g.fillRect(gx, sy + 7, 1, 1); } }
   }
 
   if (!still) {
