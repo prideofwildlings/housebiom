@@ -124,7 +124,7 @@ canvas{touch-action:none;cursor:grab}
 {
 const cv = document.getElementById('c'), g = cv.getContext('2d');
 const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const BG_H = 145, TILE_W = 514, FRAME_W = 51, FRAME_H = 55, ANCHOR_X = 25, ANCHOR_Y = 22;
+const BGS = 2, BG_H = 145, TILE_W = 514, FRAME_W = 51, FRAME_H = 55, ANCHOR_X = 25, ANCHOR_Y = 22;
 const bg = new Image(), kid = new Image();
 bg.src = 'assets/px-bg.png'; kid.src = 'assets/px-hero.png';
 
@@ -312,13 +312,13 @@ setTimeout(() => document.getElementById('help').style.opacity = 0, 6000);
 /* hovering or tapping a floating food */
 const tag = document.getElementById('tag');
 let hovered = null, tagHideT = 0;
-function foodAt(n) { for (const o of floats) if (n.x > o.x - 3 && n.x < o.x + 19 && n.y > top + 82 && n.y < top + 104) return o; return null; }
+function foodAt(n) { for (const o of floats) if (n.x > o.x - 3 && n.x < o.x + 19 && n.y > top + 101 * BGS - 18 && n.y < top + 101 * BGS + 3) return o; return null; }
 function showTag(o) {
   const r = cv.getBoundingClientRect();
   tag.textContent = o.f.name;
   const x = r.left + (o.x + 8) * k, hw = tag.offsetWidth / 2 + 8;
   tag.style.left = Math.max(hw, Math.min(innerWidth - hw, x)) + 'px';
-  tag.style.top = (r.top + (top + 80) * k) + 'px';
+  tag.style.top = (r.top + (top + 101 * BGS - 20) * k) + 'px';
   tag.classList.add('on');
 }
 cv.addEventListener('pointermove', e => {
@@ -401,11 +401,11 @@ soundBtn.addEventListener('click', () => { const on = sound.toggle(); soundBtn.s
 let W = 0, H = 0, k = 1, top = 0, topCol = '#4a0f1a', botCol = '#4a0f1a';
 function fit() {
   const vw = innerWidth, vh = innerHeight;
-  k = Math.max(1, Math.min(Math.ceil(vh / BG_H), Math.floor(vw / 110)));
+  k = Math.max(1, Math.min(Math.ceil(vh / (BG_H * BGS)), Math.floor(vw / 110)));
   W = Math.ceil(vw / k); H = Math.ceil(vh / k);
   cv.width = W; cv.height = H;
   cv.style.width = W * k + 'px'; cv.style.height = H * k + 'px';
-  top = Math.floor((H - BG_H) / 2);
+  top = Math.floor((H - BG_H * BGS) / 2);
   g.imageSmoothingEnabled = false;
 }
 addEventListener('resize', fit); fit();
@@ -428,9 +428,9 @@ const start = performance.now(); let lastT = 0;
 function draw(now) {
   const t = (now - start) / 1000, dt = Math.min(.05, t - lastT); lastT = t;
   g.fillStyle = topCol; g.fillRect(0, 0, W, top + 1);
-  g.fillStyle = botCol; g.fillRect(0, top + BG_H - 1, W, H - top - BG_H + 1);
+  g.fillStyle = botCol; g.fillRect(0, top + BG_H * BGS - 1, W, H - top - BG_H * BGS + 1);
   const scroll = 0;
-  if (bg.naturalWidth) for (let x = -scroll; x < W; x += TILE_W) g.drawImage(bg, x, top);
+  if (bg.naturalWidth) for (let x = -scroll; x < W; x += TILE_W * BGS) g.drawImage(bg, x, top, TILE_W * BGS, BG_H * BGS);
 
   if (!still) {
     g.fillStyle = '#9ff0d0';
@@ -438,7 +438,7 @@ function draw(now) {
       b.life += dt * .5;
       if (b.life > 1) { b.life = 0; b.x = Math.random() * TILE_W; }
       const sx = b.x % TILE_W;
-      if (b.life < .85) for (let x = sx; x < W; x += TILE_W) g.fillRect(Math.floor(x), top + 96 - Math.floor(b.life * 14), 1, 1);
+      if (b.life < .85) for (let x = sx * BGS; x < W; x += TILE_W * BGS) g.fillRect(Math.floor(x), top + 96 * BGS - Math.floor(b.life * 22), 1, 1);
     }
   }
 
@@ -450,7 +450,7 @@ function draw(now) {
     if (!still) o.x -= dt * 18;
     if (o.x < -24) { if (o === hovered) { hovered = null; tag.classList.remove('on'); } floats.splice(i, 1); continue; }
     const hot = o === hovered;
-    const fx = Math.round(o.x), wl = top + 101 + (still ? 0 : Math.round(Math.sin(t * 2 + o.ph))) - (hot ? 3 : 0);
+    const fx = Math.round(o.x), wl = top + 101 * BGS + (still ? 0 : Math.round(Math.sin(t * 2 + o.ph))) - (hot ? 3 : 0);
     if (hot) showTag(o);
     if (o.f.aura) {
       g.globalAlpha = hot ? 1 : still ? .8 : Math.max(.15, .55 + .45 * Math.sin(t * 3 + o.ph));
@@ -467,8 +467,8 @@ function draw(now) {
   }
 
   /* he flies around the still room: you steer him, or he wanders on his own */
-  const minX = 26, maxX = W - 34, minY = top + 24, maxY = top + 68;
-  if (px === null) { px = W * .4; py = top + 54; }
+  const minX = 26, maxX = W - 34, minY = top + 36 * BGS, maxY = top + 101 * BGS - 34;
+  if (px === null) { px = W * .4; py = top + 70 * BGS; }
   const ox = px, oy = py;
   let vx = 0, vy = 0;
   if (keys.has('arrowleft') || keys.has('a')) vx -= 1;
