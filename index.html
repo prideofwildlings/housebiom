@@ -81,14 +81,14 @@ canvas{touch-action:none;cursor:grab}
 <div class="help" id="help">Arrow keys or drag to float</div>
 <button type="button" class="sound" id="soundBtn" aria-pressed="false" aria-label="Sound"><svg viewBox="0 0 16 16" width="32" height="32" shape-rendering="crispEdges" aria-hidden="true"><rect x="2" y="6" width="3" height="4" fill="#fff3dc"/><rect x="5" y="5" width="1" height="6" fill="#fff3dc"/><rect x="6" y="4" width="1" height="8" fill="#fff3dc"/><rect x="7" y="3" width="1" height="10" fill="#fff3dc"/><g class="w" fill="#8ff0c8"><rect x="10" y="6" width="1" height="4"/><rect x="12" y="4" width="1" height="8"/><rect x="11" y="5" width="1" height="1"/><rect x="11" y="10" width="1" height="1"/></g><g class="x" fill="#ff8a8a"><rect x="10" y="6" width="1" height="1"/><rect x="11" y="7" width="1" height="1"/><rect x="12" y="8" width="1" height="1"/><rect x="13" y="9" width="1" height="1"/><rect x="13" y="6" width="1" height="1"/><rect x="12" y="7" width="1" height="1"/><rect x="11" y="8" width="1" height="1"/><rect x="10" y="9" width="1" height="1"/></g></svg></button>
 <div class="tag" id="tag"></div>
-<canvas id="c" role="img" aria-label="A boy with a net floats through a tunnel inside the gut while his safe foods drift by on the stream, glowing gold. Use the arrow keys or drag to float him around."></canvas>
+<canvas id="c" role="img" aria-label="A winged man floats through a tunnel inside the gut while his safe foods drift by on the stream, glowing gold. Use the arrow keys or drag to float him around."></canvas>
 <script>
 {
 const cv = document.getElementById('c'), g = cv.getContext('2d');
 const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const BG_H = 145, TILE_W = 514, FRAME_W = 48, FRAME_H = 49, ANCHOR_X = 18, ANCHOR_Y = 29;
+const BG_H = 145, TILE_W = 514, FRAME_W = 65, FRAME_H = 70, ANCHOR_X = 32, ANCHOR_Y = 27;
 const bg = new Image(), kid = new Image();
-bg.src = 'assets/px-bg.png'; kid.src = 'assets/px-kid.png';
+bg.src = 'assets/px-bg.png'; kid.src = 'assets/px-hero.png';
 
 /* foods logged in successfully */
 const FOODS = [
@@ -162,7 +162,7 @@ document.getElementById('closeBook').addEventListener('click', () => toggle(fals
 wrap.addEventListener('click', e => { if (e.target === wrap) toggle(false); });
 addEventListener('keydown', e => { if (e.key === 'Escape') toggle(false); });
 /* floating him yourself: keys or drag; he drifts on his own when left alone */
-let px = null, py = null, goal = null, lastInput = -99;
+let px = null, py = null, goal = null, lastInput = -99, face = 1, pose = 0, poseUntil = 0, nextPoseAt = 8;
 const keys = new Set();
 const toNative = e => { const r = cv.getBoundingClientRect(); return {x: (e.clientX - r.left) / k, y: (e.clientY - r.top) / k}; };
 cv.addEventListener('pointerdown', e => { toggle(false); cv.setPointerCapture(e.pointerId); goal = toNative(e); });
@@ -338,7 +338,7 @@ function draw(now) {
   }
 
   /* the boy drifts on his own */
-  const ax = W * .4 + (still ? 0 : Math.sin(t * .23) * W * .08), ay = top + 66 + (still ? 0 : Math.sin(t * .41) * 7);
+  const ax = W * .4 + (still ? 0 : Math.sin(t * .23) * W * .08), ay = top + 50 + (still ? 0 : Math.sin(t * .41) * 6);
   if (px === null) { px = ax; py = ay; }
   let vx = 0, vy = 0;
   if (keys.has('arrowleft') || keys.has('a')) vx -= 1;
@@ -348,18 +348,33 @@ function draw(now) {
   if (vx || vy) { const m = Math.hypot(vx, vy); px += vx / m * 60 * dt; py += vy / m * 60 * dt; lastInput = t; }
   else if (goal) { const gx = goal.x - 6, gy = goal.y, d = Math.hypot(gx - px, gy - py); if (d > 1) { const st = Math.min(d, 70 * dt); px += (gx - px) / d * st; py += (gy - py) / d * st; } lastInput = t; }
   else if (t - lastInput > 3) { const e = Math.min(1, dt * .8); px += (ax - px) * e; py += (ay - py) * e; }
-  px = Math.max(20, Math.min(W - 32, px)); py = Math.max(top + 34, Math.min(top + 86, py));
+  px = Math.max(26, Math.min(W - 34, px)); py = Math.max(top + 28, Math.min(top + 62, py));
+  const moving = !!(vx || vy || (goal && Math.hypot(goal.x - 6 - px, goal.y - py) > 2));
+  if (vx) face = vx > 0 ? 1 : -1;
+  else if (goal && Math.abs(goal.x - 6 - px) > 3) face = goal.x - 6 > px ? 1 : -1;
+  else if (!moving && t - lastInput > 3) { const dx = ax - px; if (Math.abs(dx) > 2) face = dx > 0 ? 1 : -1; else face = 1; }
   const kx = Math.round(px), ky = Math.round(py) + (still ? 0 : Math.round(Math.sin(t * 2.2) * 1.5));
   if (!still) {
     g.fillStyle = 'rgba(255,235,210,.55)';
     for (const l of lines) {
       l.t += dt * 1.2;
-      if (l.t > 1) { l.t = 0; l.y = ky - 10 + Math.floor(Math.random() * 20); l.len = 4 + Math.floor(Math.random() * 7); }
-      if (l.len) g.fillRect(kx - 22 - Math.floor(l.t * 30), l.y, l.len, 1);
+      if (l.t > 1) { l.t = 0; l.y = ky - 6 + Math.floor(Math.random() * 26); l.len = 4 + Math.floor(Math.random() * 7); }
+      if (l.len && face > 0) g.fillRect(kx - 34 - Math.floor(l.t * 30), l.y, l.len, 1);
+      if (l.len && face < 0) g.fillRect(kx + 30 + Math.floor(l.t * 30), l.y, l.len, 1);
     }
   }
-  const frame = still ? 0 : Math.floor(t * 4.5) % 2;
-  if (kid.naturalWidth) g.drawImage(kid, frame * FRAME_W, 0, FRAME_W, FRAME_H, kx - ANCHOR_X, ky - ANCHOR_Y, FRAME_W, FRAME_H);
+  let frame = 0;
+  if (!still) {
+    if (moving) { frame = Math.floor(t * 3) % 2; poseUntil = 0; nextPoseAt = t + 6; }
+    else {
+      if (t > nextPoseAt) { pose = Math.random() < .55 ? 2 : 3; poseUntil = t + 2.4; nextPoseAt = t + 9 + Math.random() * 7; }
+      frame = t < poseUntil ? pose : ((t * .8) % 1 < .28 ? 1 : 0);
+    }
+  }
+  if (kid.naturalWidth) {
+    if (face < 0) { g.save(); g.translate(kx, 0); g.scale(-1, 1); g.drawImage(kid, frame * FRAME_W, 0, FRAME_W, FRAME_H, -ANCHOR_X, ky - ANCHOR_Y, FRAME_W, FRAME_H); g.restore(); }
+    else g.drawImage(kid, frame * FRAME_W, 0, FRAME_W, FRAME_H, kx - ANCHOR_X, ky - ANCHOR_Y, FRAME_W, FRAME_H);
+  }
   if (!still) requestAnimationFrame(draw);
 }
 if (still) { let n = 0; const once = () => { if (++n === 2) requestAnimationFrame(draw); }; bg.addEventListener('load', once); kid.addEventListener('load', once); }
